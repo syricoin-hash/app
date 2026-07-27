@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyriCoin App</title>
+    <script src="https://telegram.org"></script>
+    <script src="https://adsgram.ai"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0b0c10; color: #fff; padding: 20px; text-align: center; }
+        .header-box { background: linear-gradient(135deg, #1f2833, #0b0c10); border: 2px solid #45f3ff; border-radius: 15px; padding: 15px; margin-bottom: 25px; box-shadow: 0 0 15px rgba(69, 243, 255, 0.2); }
+        .user-name { font-size: 18px; color: #45f3ff; margin-bottom: 5px; }
+        .balance-title { font-size: 14px; color: #c5a3ff; }
+        .balance-value { font-size: 28px; font-weight: bold; color: #fff; margin-top: 5px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+        .btn { width: 100%; padding: 16px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; margin-bottom: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn-video { background: linear-gradient(90deg, #ff007f, #7f00ff); color: #fff; animation: pulse 2s infinite; }
+        .btn-tasks { background: linear-gradient(90deg, #00c6ff, #0072ff); color: #fff; }
+        .btn-channels { background-color: #1f2833; border: 1px solid #45f3ff; color: #45f3ff; }
+        .btn-invite { background-color: #1f2833; border: 1px solid #c5a3ff; color: #c5a3ff; }
+        .btn-withdraw { background: linear-gradient(90deg, #11998e, #38ef7d); color: #fff; margin-top: 10px; }
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(127, 0, 255, 0.7); } 70% { box-shadow: 0 0 0 12px rgba(127, 0, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(127, 0, 255, 0); } }
+    </style>
+</head>
+<body>
+    <div class="header-box">
+        <div id="username" class="user-name">جاري تحميل الحساب...</div>
+        <div class="balance-title">رصيدك الحالي المستحق</div>
+        <div class="balance-value"><span id="balance">0</span> ل.س</div>
+    </div>
+    <button class="btn btn-video" onclick="showVideoAd()">◀️ شاهد الفيديو اليومي واربح</button>
+    <button class="btn btn-tasks" onclick="openCpaTasks()">💎 قسم المهام الماسية (أرباح ضخمة)</button>
+    <button class="btn btn-channels" onclick="openChannel()">📢 انضم لقناة البوت الرسمية</button>
+    <button class="btn btn-invite" onclick="inviteFriends()">👥 أدعُ أصدقاءك واكسب ليرات</button>
+    <button class="btn btn-withdraw" onclick="requestWithdraw()">💳 طلب سحب الأرباح كاش</button>
+    <script>
+        const tg = window.Telegram.WebApp; tg.expand();
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) { document.getElementById('username').innerText = "👤 أهلاً بك، " + tg.initDataUnsafe.user.first_name; }
+        else { document.getElementById('username').innerText = "👤 أهلاً بك في SyriCoin"; }
+        const AdController = window.Adsgram.init({ blockId: "39964" });
+        function showVideoAd() { AdController.show().then((result) => { alert("🎉 شكراً لك! تم احتساب مكافأة مشاهدة الفيديو بنجاح."); }).catch((result) => { alert("⚠️ لم تكتمل مشاهدة الفيديو، يرجى مشاهدته كاملاً لنهاية العداد لكسب الليرات."); }); }
+        function openCpaTasks() { tg.showAlert("💎 تم فتح قسم المهام الماسية، اختر مهمة ونفذها لكسب أرباح فورية!"); }
+        function openChannel() { tg.openTelegramLink("https://t.me"); }
+        function inviteFriends() { tg.showAlert("👥 انسخ رابط إحالتك من البوت وأرسله لأصدقائك، ستحصل على مكافأة نقدية عن كل صديق ينضم بقناتنا!"); }
+        function requestWithdraw() { tg.showAlert("💳 سيقوم سكريبت الكمبيوتر بفحص نقاطك وتأكيد التحويل التلقائي لمحفظتك فوراً!"); }
+    </script>
+</body>
+</html>
