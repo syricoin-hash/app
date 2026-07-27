@@ -3,24 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SyriCoin App</title>
+    <title>SyriCoin Advanced App</title>
     <script src="https://telegram.org"></script>
     <script src="https://adsgram.ai"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #0b0c10; color: #fff; padding: 20px; text-align: center; }
-        .header-box { background: linear-gradient(135deg, #1f2833, #0b0c10); border: 2px solid #45f3ff; border-radius: 15px; padding: 15px; margin-bottom: 25px; box-shadow: 0 0 15px rgba(69, 243, 255, 0.2); }
-        .user-name { font-size: 18px; color: #45f3ff; margin-bottom: 5px; }
-        .balance-title { font-size: 14px; color: #c5a3ff; }
-        .balance-value { font-size: 28px; font-weight: bold; color: #fff; margin-top: 5px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
-        .btn { width: 100%; padding: 16px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; margin-bottom: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: #0b0c10; color: #fff; padding: 20px; text-align: center; overflow-x: hidden; }
+        .header-box { background: linear-gradient(135deg, rgba(31, 40, 51, 0.8), rgba(11, 12, 16, 0.9)); border: 2px solid #45f3ff; border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 0 25px rgba(69, 243, 255, 0.3); animation: fadeInDown 0.8s ease-out; position: relative; overflow: hidden; }
+        .header-box::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(69, 243, 255, 0.1), transparent); transform: rotate(45deg); animation: shineCard 4s infinite linear; }
+        .user-name { font-size: 20px; color: #45f3ff; margin-bottom: 8px; font-weight: bold; }
+        .balance-title { font-size: 13px; color: #c5a3ff; letter-spacing: 1px; }
+        .balance-value { font-size: 32px; font-weight: 900; color: #fff; margin-top: 5px; text-shadow: 0 0 15px rgba(69, 243, 255, 0.6); }
+        .btn-container { animation: fadeInUp 1s ease-out; }
+        .btn { width: 100%; padding: 18px; font-size: 16px; font-weight: bold; border: none; border-radius: 14px; margin-bottom: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 6px 15px rgba(0,0,0,0.4); position: relative; overflow: hidden; }
         .btn-video { background: linear-gradient(90deg, #ff007f, #7f00ff); color: #fff; animation: pulse 2s infinite; }
+        .btn-video::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); transform: skewX(-20deg); animation: lightShine 2.5s infinite linear; }
         .btn-tasks { background: linear-gradient(90deg, #00c6ff, #0072ff); color: #fff; }
-        .btn-channels { background-color: #1f2833; border: 1px solid #45f3ff; color: #45f3ff; }
-        .btn-invite { background-color: #1f2833; border: 1px solid #c5a3ff; color: #c5a3ff; }
-        .btn-withdraw { background: linear-gradient(90deg, #11998e, #38ef7d); color: #fff; margin-top: 10px; }
-        .btn:active { transform: scale(0.98); opacity: 0.9; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(127, 0, 255, 0.7); } 70% { box-shadow: 0 0 0 12px rgba(127, 0, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(127, 0, 255, 0); } }
+        .btn-channels { background-color: #1f2833; border: 1.5px solid #45f3ff; color: #45f3ff; }
+        .btn-invite { background-color: #1f2833; border: 1.5px solid #c5a3ff; color: #c5a3ff; }
+        .btn-withdraw { background: linear-gradient(90deg, #11998e, #38ef7d); color: #fff; font-size: 17px; margin-top: 10px; }
+        .btn:active { transform: scale(0.95); box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(127, 0, 255, 0.5); } 70% { transform: scale(1.02); box-shadow: 0 0 0 15px rgba(127, 0, 255, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(127, 0, 255, 0); } }
+        @keyframes lightShine { 0% { left: -100%; } 100% { left: 150%; } }
+        @keyframes shineCard { 0% { transform: translate(-30%, -30%) rotate(45deg); } 100% { transform: translate(30%, 30%) rotate(45deg); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -29,11 +36,13 @@
         <div class="balance-title">رصيدك الحالي المستحق</div>
         <div class="balance-value"><span id="balance">0</span> ل.س</div>
     </div>
-    <button class="btn btn-video" onclick="showVideoAd()">◀️ شاهد الفيديو اليومي واربح</button>
-    <button class="btn btn-tasks" onclick="openCpaTasks()">💎 قسم المهام الماسية (أرباح ضخمة)</button>
-    <button class="btn btn-channels" onclick="openChannel()">📢 انضم لقناة البوت الرسمية</button>
-    <button class="btn btn-invite" onclick="inviteFriends()">👥 أدعُ أصدقاءك واكسب ليرات</button>
-    <button class="btn btn-withdraw" onclick="requestWithdraw()">💳 طلب سحب الأرباح كاش</button>
+    <div class="btn-container">
+        <button class="btn btn-video" onclick="showVideoAd()">◀️ شاهد الفيديو اليومي واربح</button>
+        <button class="btn btn-tasks" onclick="openCpaTasks()">💎 قسم المهام الماسية (أرباح ضخمة)</button>
+        <button class="btn btn-channels" onclick="openChannel()">📢 انضم لقناة البوت الرسمية</button>
+        <button class="btn btn-invite" onclick="inviteFriends()">👥 أدعُ أصدقاءك واكسب ليرات</button>
+        <button class="btn btn-withdraw" onclick="requestWithdraw()">💳 طلب سحب الأرباح كاش</button>
+    </div>
     <script>
         const tg = window.Telegram.WebApp; tg.expand();
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) { document.getElementById('username').innerText = "👤 أهلاً بك، " + tg.initDataUnsafe.user.first_name; }
