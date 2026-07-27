@@ -3,56 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SyriCoin Advanced App</title>
+    <title>SyriCoin Premium App</title>
     <script src="https://telegram.org"></script>
     <script src="https://adsgram.ai"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: #0b0c10; color: #fff; padding: 20px; text-align: center; overflow-x: hidden; }
-        .header-box { background: linear-gradient(135deg, rgba(31, 40, 51, 0.8), rgba(11, 12, 16, 0.9)); border: 2px solid #45f3ff; border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 0 25px rgba(69, 243, 255, 0.3); animation: fadeInDown 0.8s ease-out; position: relative; overflow: hidden; }
-        .header-box::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(69, 243, 255, 0.1), transparent); transform: rotate(45deg); animation: shineCard 4s infinite linear; }
-        .user-name { font-size: 20px; color: #45f3ff; margin-bottom: 8px; font-weight: bold; }
-        .balance-title { font-size: 13px; color: #c5a3ff; letter-spacing: 1px; }
-        .balance-value { font-size: 32px; font-weight: 900; color: #fff; margin-top: 5px; text-shadow: 0 0 15px rgba(69, 243, 255, 0.6); }
-        .btn-container { animation: fadeInUp 1s ease-out; }
-        .btn { width: 100%; padding: 18px; font-size: 16px; font-weight: bold; border: none; border-radius: 14px; margin-bottom: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 6px 15px rgba(0,0,0,0.4); position: relative; overflow: hidden; }
-        .btn-video { background: linear-gradient(90deg, #ff007f, #7f00ff); color: #fff; animation: pulse 2s infinite; }
-        .btn-video::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); transform: skewX(-20deg); animation: lightShine 2.5s infinite linear; }
-        .btn-tasks { background: linear-gradient(90deg, #00c6ff, #0072ff); color: #fff; }
-        .btn-channels { background-color: #1f2833; border: 1.5px solid #45f3ff; color: #45f3ff; }
-        .btn-invite { background-color: #1f2833; border: 1.5px solid #c5a3ff; color: #c5a3ff; }
-        .btn-withdraw { background: linear-gradient(90deg, #11998e, #38ef7d); color: #fff; font-size: 17px; margin-top: 10px; }
-        .btn:active { transform: scale(0.95); box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(127, 0, 255, 0.5); } 70% { transform: scale(1.02); box-shadow: 0 0 0 15px rgba(127, 0, 255, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(127, 0, 255, 0); } }
-        @keyframes lightShine { 0% { left: -100%; } 100% { left: 150%; } }
-        @keyframes shineCard { 0% { transform: translate(-30%, -30%) rotate(45deg); } 100% { transform: translate(30%, 30%) rotate(45deg); } }
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        /* نظام ألوان وهندسة أبل المطفية المتميزة */
+        :root {
+            --apple-bg: #000000;
+            --apple-card: #1c1c1e;
+            --apple-card-secondary: #2c2c2e;
+            --apple-text: #f5f5f7;
+            --apple-text-muted: #86868b;
+            --apple-blue: #0071e3;
+            --apple-green: #30d158;
+            --apple-purple: #bf5af2;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body { 
+            background-color: var(--apple-bg); 
+            color: var(--apple-text); 
+            padding: 16px; 
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* حاوية علوية تشبه الجزيرة الديناميكية لأبل Dynamic Island */
+        .dynamic-header {
+            background: var(--apple-card);
+            border-radius: 24px;
+            padding: 24px 16px;
+            margin-bottom: 16px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .user-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--apple-text-muted);
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .balance-label {
+            font-size: 14px;
+            color: var(--apple-text-muted);
+            font-weight: 400;
+            letter-spacing: -0.2px;
+        }
+
+        .balance-amount {
+            font-size: 40px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-top: 4px;
+            letter-spacing: -1px;
+        }
+
+        .currency {
+            font-size: 20px;
+            font-weight: 400;
+            color: var(--apple-text-muted);
+            margin-right: 4px;
+        }
+
+        /* شبكة تقسيم كروت أبل الفخمة Bento Grid Layout */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        /* تصميم الكبس الكاش الواسع أسفل الشبكة */
+        .full-width-box {
+            grid-column: span 2;
+        }
+
+        /* هندسة بطاقات أبل التفاعلية */
+        .apple-card-btn {
+            background: var(--apple-card);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: space-between;
+            text-align: right;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 120px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .apple-card-btn:active {
+            transform: scale(0.97);
+            background: var(--apple-card-secondary);
+        }
+
+        /* أيقونات ناعمة وراقية */
+        .card-icon {
+            font-size: 22px;
+            background: rgba(255, 255, 255, 0.05);
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .icon-video { color: var(--apple-purple); }
+        .icon-tasks { color: var(--apple-blue); }
+        .icon-channel { color: #5ac8fa; }
+        .icon-invite { color: #ff9500; }
+        .icon-withdraw { color: var(--apple-green); }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--apple-text);
+            line-height: 1.3;
+        }
+
+        .card-desc {
+            font-size: 12px;
+            color: var(--apple-text-muted);
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        /* كرت السحب النقدي الممتد المتميز */
+        .withdraw-row {
+            flex-direction: row !important;
+            align-items: center !important;
+            min-height: auto !important;
+            padding: 16px !important;
+            background: linear-gradient(135deg, #1c1c1e 0%, #111112 100%);
+            border: 1px solid rgba(48, 209, 88, 0.15);
+        }
+
+        .withdraw-text-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .withdraw-row .card-icon {
+            margin-bottom: 0 !important;
+            margin-left: 14px;
+            background: rgba(48, 209, 88, 0.1);
+        }
+
+        /* فوتر حقوق أبل سفلي خفيف */
+        .apple-footer {
+            margin-top: auto;
+            font-size: 11px;
+            color: var(--apple-text-muted);
+            text-align: center;
+            padding: 16px 0;
+            letter-spacing: 0.2px;
+        }
     </style>
 </head>
 <body>
-    <div class="header-box">
-        <div id="username" class="user-name">جاري تحميل الحساب...</div>
-        <div class="balance-title">رصيدك الحالي المستحق</div>
-        <div class="balance-value"><span id="balance">0</span> ل.س</div>
+
+    <!-- الواجهة العلوية الفخمة -->
+    <div class="dynamic-header">
+        <div id="username" class="user-badge">جاري المزامنة مع سحابة SyriCoin...</div>
+        <div class="balance-label">الرصيد المتوفر والمستحق نقدًا</div>
+        <div class="balance-amount"><span id="balance">0</span><span class="currency"> ل.س</span></div>
     </div>
-    <div class="btn-container">
-        <button class="btn btn-video" onclick="showVideoAd()">◀️ شاهد الفيديو اليومي واربح</button>
-        <button class="btn btn-tasks" onclick="openCpaTasks()">💎 قسم المهام الماسية (أرباح ضخمة)</button>
-        <button class="btn btn-channels" onclick="openChannel()">📢 انضم لقناة البوت الرسمية</button>
-        <button class="btn btn-invite" onclick="inviteFriends()">👥 أدعُ أصدقاءك واكسب ليرات</button>
-        <button class="btn btn-withdraw" onclick="requestWithdraw()">💳 طلب سحب الأرباح كاش</button>
+
+    <!-- شبكة عروض بينتو الاحترافية Bento Grid -->
+    <div class="bento-grid">
+        
+        <!-- كرت تشغيل الفيديو اليومي -->
+        <div class="apple-card-btn" onclick="showVideoAd()">
+            <div class="card-icon icon-video">✦</div>
+            <div>
+                <div class="card-title">مكافأة الفيديو</div>
+                <div class="card-desc">+500 ليرة فورًا</div>
+            </div>
+        </div>
+
+        <!-- كرت المهام الماسية -->
+        <div class="apple-card-btn" onclick="openCpaTasks()">
+            <div class="card-icon icon-tasks">📊</div>
+            <div>
+                <div class="card-title">المهام الماسية</div>
+                <div class="card-descأرباح مضخمة</div>
+            </div>
+        </div>
+
+        <!-- كرت الانضمام للقناة -->
+        <div class="apple-card-btn" onclick="openChannel()">
+            <div class="card-icon icon-channel">📢</div>
+            <div>
+                <div class="card-title">القناة الرسمية</div>
+                <div class="card-desc">متابعة التحديثات</div>
+            </div>
+        </div>
+
+        <!-- كرت دعوة الأصدقاء -->
+        <div class="apple-card-btn" onclick="inviteFriends()">
+            <div class="card-icon icon-invite">👥</div>
+            <div>
+                <div class="card-title">دعوة الأصدقاء</div>
+                <div class="card-desc">نظام الإحالة الذكي</div>
+            </div>
+        </div>
+
+        <!-- كرت السحب النقدي الممتد الفاخر -->
+        <div class="apple-card-btn full-width-box withdraw-row" onclick="requestWithdraw()">
+            <div class="card-icon icon-withdraw">💳</div>
+            <div class="withdraw-text-group">
+                <div class="card-title">طلب سحب الأرباح كاش</div>
+                <div class="card-desc">تحويل فوري وآمن لمحفظتك النقذية الشخصية</div>
+            </div>
+        </div>
+
     </div>
+
+    <div class="apple-footer">Designed by SyriCoin Team © 2026</div>
+
     <script>
-        const tg = window.Telegram.WebApp; tg.expand();
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) { document.getElementById('username').innerText = "👤 أهلاً بك، " + tg.initDataUnsafe.user.first_name; }
-        else { document.getElementById('username').innerText = "👤 أهلاً بك في SyriCoin"; }
-        const AdController = window.Adsgram.init({ blockId: "39964" });
-        function showVideoAd() { AdController.show().then((result) => { alert("🎉 شكراً لك! تم احتساب مكافأة مشاهدة الفيديو بنجاح."); }).catch((result) => { alert("⚠️ لم تكتمل مشاهدة الفيديو، يرجى مشاهدته كاملاً لنهاية العداد لكسب الليرات."); }); }
-        function openCpaTasks() { tg.showAlert("💎 تم فتح قسم المهام الماسية، اختر مهمة ونفذها لكسب أرباح فورية!"); }
-        function openChannel() { tg.openTelegramLink("https://t.me"); }
-        function inviteFriends() { tg.showAlert("👥 انسخ رابط إحالتك من البوت وأرسله لأصدقائك، ستحصل على مكافأة نقدية عن كل صديق ينضم بقناتنا!"); }
-        function requestWithdraw() { tg.showAlert("💳 سيقوم سكريبت الكمبيوتر بفحص نقاطك وتأكيد التحويل التلقائي لمحفظتك فوراً!"); }
-    </script>
-</body>
-</html>
+        // دمج برمجيات تليجرام وأتمتة الأرباح
+        const tg = window.Telegram.WebApp; 
+        tg.expand();
+        tg.ready();
+
+        const MAKE_WEBHOOK_URL = "https://make.com"; 
+        const CPALEAD_OFFER_WALL = "https://cpalead.com"; 
+        const BOT_USERNAME = "SyricoinTask_bot";
+        const CHANNEL_LINK = "https://t.me"; 
+
+        const user = tg.initDataUnsafe?.user;
+        const userId = user ? user.id : "guest";
+        const firstName = user ? user.first_name : "مستخدم SyriCoin";
+        
+        document.getElementById('username').innerText = user ? `👤 الحساب الموثق: ${firstName}` : "👤 SyriCoin Secure Mode";
+
+        async function fetchUserBalance() {
+            if (userId === "guest") return;
+            try {
+                const response = await fetch(`${MAKE_WEBHOOK_URL}?action=getBalance&userId=${userId}&name=${encodeURIComponent(firstName)}`);
+                const data = await response.json();
+                if (data && data.balance !== undefined) {
+                    document.getElementById('balance').innerText = parseInt(data.balance).toLocaleString('ar-SY');
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        async function addEarnings(amount, reason) {
+            document.getElementById('balance').innerText = "...";
+            try {
+                const response = await fetch(`${MAKE_WEBHOOK_URL}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: "addBalance",
+                        userId: userId,
+                        name: firstName,
+                        amount: amount,
+                        reason: reason
+                    })
+                });
+                const data = await response.json();
+                if (data && data.newBalance !== undefined) {
+                    document.getElementById('balance').innerText = parseInt(data.newBalance).toLocaleString('ar-SY');
+                    return true;
+                }
+            } catch (error) {
