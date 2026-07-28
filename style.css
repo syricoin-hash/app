@@ -1,9 +1,7 @@
 /* =========================================
-   SyriCoin Telegram Mini App - Phase 2
+   SyriCoin Telegram Mini App - Phase 2 & 3 Updated
    Theme: Premium Dark + Glassmorphism
    ========================================= */
-
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
 
 :root {
     /* Color Palette */
@@ -19,6 +17,8 @@
     /* Accents & Typography */
     --neon-green: #00fa65;
     --neon-glow: 0 0 15px rgba(0, 250, 101, 0.2);
+    --error-red: #ff3b30;
+    --error-glow: 0 0 15px rgba(255, 59, 48, 0.3);
     --text-primary: #ffffff;
     --text-secondary: #9ca3af;
     
@@ -56,16 +56,75 @@ button {
     outline: none;
     background: none;
     font-family: inherit;
-    transition: all 0.2s ease;
+    transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-button:active {
-    transform: scale(0.97);
+/* Global button click press effect */
+button:active, .method-card:active, .reel-card:active {
+    transform: scale(0.96) !important;
 }
 
 /* Hide scrollbars for native app feel */
 ::-webkit-scrollbar {
     display: none;
+}
+
+/* =========================================
+   Welcome Screen Style (Modified)
+   ========================================= */
+#welcome-screen {
+    position: fixed;
+    inset: 0;
+    background-color: #000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#welcome-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.welcome-content {
+    text-align: center;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.welcome-title {
+    font-family: 'Cairo', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: #ffffff;
+    text-align: center;
+}
+
+.welcome-subtitle {
+    font-family: 'Cairo', sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+#start-app-btn {
+    background-color: var(--neon-green);
+    color: #000000;
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 16px;
+    box-shadow: var(--neon-glow);
 }
 
 /* =========================================
@@ -79,8 +138,7 @@ button:active {
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    /* Temporary animation to hide splash screen for testing without JS */
-    animation: fadeOutSplash 2.5s forwards;
+    animation: fadeOutSplash 2s forwards;
 }
 
 .splash-content {
@@ -116,7 +174,7 @@ button:active {
 }
 
 @keyframes fadeOutSplash {
-    0%, 80% { opacity: 1; visibility: visible; }
+    0%, 75% { opacity: 1; visibility: visible; }
     100% { opacity: 0; visibility: hidden; }
 }
 
@@ -136,30 +194,6 @@ button:active {
     align-items: center;
 }
 
-.user-profile {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.avatar-placeholder {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    color: var(--text-secondary);
-}
-
-#username-display {
-    font-size: 15px;
-    font-weight: 700;
-}
-
 .app-brand {
     font-size: 20px;
     font-weight: 800;
@@ -173,12 +207,30 @@ button:active {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     color: var(--text-primary);
-    padding: 8px 16px;
+    padding: 6px 14px;
     border-radius: 20px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+    height: 42px;
+    min-width: 100px;
+}
+
+#settings-btn .btn-line-main {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#settings-btn .btn-line-sub {
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-weight: 400;
 }
 
 /* =========================================
@@ -197,7 +249,6 @@ button:active {
     box-shadow: var(--glass-shadow);
 }
 
-/* Subtle background glow */
 .balance-card::before {
     content: '';
     position: absolute;
@@ -320,73 +371,7 @@ section h3 {
 }
 
 /* =========================================
-   5. Reels Section
-   ========================================= */
-.reels-container {
-    display: flex;
-    gap: 16px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    padding-bottom: 10px;
-}
-
-.reel-card {
-    min-width: 140px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    padding: 12px;
-    scroll-snap-align: start;
-}
-
-.reel-thumb {
-    height: 180px;
-    background: rgba(0,0,0,0.4);
-    border-radius: var(--radius-sm);
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-    font-size: 12px;
-}
-
-.reel-title {
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 8px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.reel-reward {
-    font-size: 13px;
-    color: var(--neon-green);
-    font-weight: 700;
-}
-
-/* =========================================
-   6. Recent Activity
-   ========================================= */
-.activity-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.activity-list li {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    padding: 16px 20px;
-    font-size: 14px;
-    color: var(--text-secondary);
-}
-
-/* =========================================
-   7. Internal Pages & Back Buttons
+   7. Internal Pages & Back Buttons & Transitions
    ========================================= */
 .internal-page {
     position: fixed;
@@ -394,19 +379,16 @@ section h3 {
     background-color: var(--bg-deep-black);
     background-image: var(--bg-gradient);
     z-index: 100;
-    display: none; /* Will be toggled to flex via JS in Phase 3 */
-    flex-direction: column;
-}
-
-/* Class to activate internal page later */
-.internal-page.active {
     display: flex;
-    animation: slideIn 0.3s ease forwards;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    visibility: hidden;
 }
 
-@keyframes slideIn {
-    from { transform: translateX(-100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+.internal-page.active {
+    transform: translateX(0);
+    visibility: visible;
 }
 
 .internal-header {
@@ -439,4 +421,323 @@ section h3 {
     padding: 24px 20px;
     flex: 1;
     overflow-y: auto;
+}
+
+/* =========================================
+   Withdrawal Modal Bottom Sheet & Form Specs
+   ========================================= */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-sheet {
+    background: #0d0d12;
+    border: 1px solid var(--glass-border);
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-overlay.active .modal-sheet {
+    transform: translateY(0);
+}
+
+.modal-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    margin: 12px auto 0;
+}
+
+.modal-header-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.modal-header-title h3 {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+#close-modal-btn {
+    font-size: 24px;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+}
+
+.modal-body-scroll {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Tabs */
+.withdrawal-tabs {
+    display: flex;
+    gap: 12px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 14px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    background: rgba(0, 250, 101, 0.1);
+    border-color: var(--neon-green);
+    color: var(--text-primary);
+    box-shadow: var(--neon-glow);
+}
+
+/* Form Fields */
+.withdrawal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input-group label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.input-group input, .input-group select {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    color: var(--text-primary);
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.input-group input:focus {
+    border-color: var(--neon-green);
+}
+
+.phone-input-wrapper {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.phone-prefix {
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.phone-input-wrapper input {
+    flex: 1;
+    border: none;
+    background: transparent;
+}
+
+#upload-qr-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: center;
+}
+
+.qr-status {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 4px;
+}
+
+.modal-footer {
+    padding: 16px 24px calc(var(--safe-bottom) + 16px);
+    border-top: 1px solid var(--glass-border);
+    background: #0d0d12;
+}
+
+#smart-confirm-withdrawal-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 16px;
+    background-color: var(--neon-green);
+    color: #000000;
+    box-shadow: var(--neon-glow);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#smart-confirm-withdrawal-btn.error-state {
+    background-color: var(--error-red) !important;
+    color: #ffffff !important;
+    box-shadow: var(--error-glow) !important;
+}
+
+/* =========================================
+   Vertical Video Stream Modal Viewer
+   ========================================= */
+.video-stream-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000000;
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+}
+
+.video-stream-container {
+    flex: 1;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    height: 100vh;
+}
+
+.video-slide {
+    height: 100vh;
+    width: 100vw;
+    scroll-snap-align: start;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background: #111;
+}
+
+.video-slide video, .video-slide img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+}
+
+.video-overlay-info {
+    position: relative;
+    z-index: 2;
+    padding: 30px 20px calc(var(--safe-bottom) + 30px);
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.video-progress-bar-container {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.video-progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--neon-green);
+    transition: width 0.1s linear;
+}
+
+#close-video-stream {
+    position: fixed;
+    top: calc(var(--safe-top) + 12px);
+    right: 20px;
+    z-index: 2005;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Accordion Expandable Styling for Profile Page */
+.expandable-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.expandable-header {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.expandable-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.expandable-card.expanded .expandable-content {
+    max-height: 500px;
+    padding-bottom: 20px;
 }
