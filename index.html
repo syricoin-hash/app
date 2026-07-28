@@ -2,14 +2,27 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SyriCoin - منصة الربح الرقمي</title>
-<link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- QR Code Decoder Library (Zxing / jsQR fallback integration) -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </head>
-<script src="script.js"></script>
-    <body>
+<body>
 
-    <!-- 1. Splash Screen -->
+    <!-- 1. Welcome Screen (Modified according to specs) -->
+    <div id="welcome-screen">
+        <div class="welcome-content">
+            <h1 class="welcome-title">أهلاً بك في SyriCoin</h1>
+            <p class="welcome-subtitle">طريقة لكسب النقاط وتحويلها إلى مال</p>
+            <button id="start-app-btn">ابدأ الآن</button>
+        </div>
+    </div>
+
+    <!-- 2. Splash Screen -->
     <div id="splash-screen">
         <div class="splash-content">
             <div class="logo-placeholder">شعار SyriCoin</div>
@@ -21,17 +34,17 @@
     <!-- Main App Wrapper -->
     <div id="app">
 
-        <!-- 2. Home Page -->
+        <!-- 3. Home Page -->
         <main id="home-page" class="page">
             
             <!-- Header -->
             <header class="app-header">
-                <div class="user-profile">
-                    <div class="avatar-placeholder">صورة</div>
-                    <span id="username-display">اسم المستخدم</span>
-                </div>
+                <!-- User profile right section removed as requested -->
                 <div class="app-brand">SyriCoin</div>
-                <button id="settings-btn" aria-label="الإعدادات">الإعدادات</button>
+                <button id="settings-btn" aria-label="الإعدادات">
+                    <span class="btn-line-main">الإعدادات</span>
+                    <span class="btn-line-sub">التفاصيل الشخصية</span>
+                </button>
             </header>
 
             <!-- Balance Card -->
@@ -56,36 +69,9 @@
                 <h3>طرق الربح</h3>
                 <div class="methods-grid">
                     <button class="method-card" data-target="videos-page">مشاهدة الفيديوهات</button>
-                    <button class="method-card" data-target="cpa-page">المهام الماسية CPA</button>
-                    <button class="method-card" data-target="referrals-page">نظام الإحالات</button>
+                    <button class="method-card" data-target="cpa-page">المهام الماسية</button>
+                    <button class="method-card" data-target="referrals-page">نظام المشارك</button>
                 </div>
-            </section>
-
-            <!-- Reels Section -->
-            <section class="reels-section">
-                <h3>ريلز مربحة</h3>
-                <div class="reels-container">
-                    <div class="reel-card">
-                        <div class="reel-thumb">صورة</div>
-                        <h4 class="reel-title">عنوان الفيديو الأول</h4>
-                        <span class="reel-reward">+ نقاط</span>
-                    </div>
-                    <div class="reel-card">
-                        <div class="reel-thumb">صورة</div>
-                        <h4 class="reel-title">عنوان الفيديو الثاني</h4>
-                        <span class="reel-reward">+ نقاط</span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Recent Activity -->
-            <section class="recent-activity">
-                <h3>النشاط الأخير</h3>
-                <ul class="activity-list">
-                    <li id="last-task">آخر مهمة: لا يوجد نشاط حالي</li>
-                    <li id="last-video">آخر فيديو: لا يوجد نشاط حالي</li>
-                    <li id="last-withdrawal">آخر عملية سحب: لا يوجد نشاط حالي</li>
-                </ul>
             </section>
 
         </main>
@@ -96,7 +82,7 @@
         <div id="videos-page" class="internal-page">
             <header class="internal-header">
                 <button class="back-btn" data-target="home-page">رجوع</button>
-                <h2>صفحة الفيديوهات</h2>
+                <h2>مشاهدة الفيديوهات</h2>
             </header>
             <div class="internal-content">
                 <!-- سيتم إدراج قائمة الفيديوهات لاحقاً -->
@@ -107,7 +93,7 @@
         <div id="cpa-page" class="internal-page">
             <header class="internal-header">
                 <button class="back-btn" data-target="home-page">رجوع</button>
-                <h2>مهام CPA الماسية</h2>
+                <h2>مهام الماسية</h2>
             </header>
             <div class="internal-content">
                 <!-- سيتم إدراج مهام CPA لاحقاً -->
@@ -129,7 +115,7 @@
         <div id="referrals-page" class="internal-page">
             <header class="internal-header">
                 <button class="back-btn" data-target="home-page">رجوع</button>
-                <h2>نظام الإحالات</h2>
+                <h2>نظام المشارك</h2>
             </header>
             <div class="internal-content">
                 <!-- سيتم إدراج رابط الإحالة والإحصائيات لاحقاً -->
@@ -149,5 +135,70 @@
 
     </div>
 
+    <!-- Withdrawal Modal Bottom Sheet -->
+    <div id="withdrawal-modal" class="modal-overlay">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <div class="modal-header-title">
+                <h3>طلب السحب</h3>
+                <button id="close-modal-btn">&times;</button>
+            </div>
+            
+            <div class="modal-body-scroll">
+                <!-- Tabs / Radio Buttons -->
+                <div class="withdrawal-tabs" id="withdrawal-tabs-container">
+                    <!-- Dynamic Service Type Buttons injected via JS -->
+                </div>
+
+                <!-- Input Fields Section -->
+                <div class="withdrawal-form">
+                    <div class="input-group">
+                        <label>الاسم الكامل الثلاثي (كما في الهوية)</label>
+                        <input type="text" id="withdrawal-fullname" placeholder="أدخل اسمك الثلاثي الكامل">
+                    </div>
+
+                    <div class="input-group">
+                        <label>رقم الهاتف المحمول</label>
+                        <div class="phone-input-wrapper">
+                            <span class="phone-prefix">09</span>
+                            <input type="tel" id="withdrawal-phone" maxlength="8" placeholder="xxxxxxxx">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>الرقم الوطني السوري</label>
+                        <input type="text" id="withdrawal-national-id" maxlength="11" placeholder="أدخل الرقم الوطني 11 خانة">
+                    </div>
+
+                    <!-- QR Code Section for Cash Withdrawal -->
+                    <div class="input-group" id="qr-section-container" style="display: none;">
+                        <label>كود الـ QR لحسابك</label>
+                        <button type="button" id="upload-qr-btn">ارفع كود الـ QR لحسابك</button>
+                        <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+                        <div id="qr-status-text" class="qr-status">لم يتم رفع أي كود بعد</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>المبلغ المطلوب</label>
+                        <input type="number" id="withdrawal-amount" placeholder="أدخل عدد النقاط أو المبلغ">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="smart-confirm-withdrawal-btn">تأكيد التحويل</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vertical Video Stream Modal Viewer -->
+    <div id="video-stream-modal" class="video-stream-overlay">
+        <div class="video-stream-container" id="video-stream-scroll-container">
+            <!-- Vertical video slides injected via JS -->
+        </div>
+        <button id="close-video-stream">&times;</button>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
