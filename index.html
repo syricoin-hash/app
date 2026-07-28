@@ -1,282 +1,502 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SyriCoin Premium App</title>
-    <script src="https://telegram.org"></script>
-    <script src="https://adsgram.ai"></script>
-    <style>
-        :root {
-            --apple-bg: #000000;
-            --apple-card: #1c1c1e;
-            --apple-card-secondary: #2c2c2e;
-            --apple-text: #f5f5f7;
-            --apple-text-muted: #86868b;
-            --apple-blue: #0071e3;
-            --apple-green: #30d158;
-            --apple-purple: #bf5af2;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
+<title>SyriCoin Mini App</title>
 
-        body { 
-            background-color: var(--apple-bg); 
-            color: var(--apple-text); 
-            padding: 16px; 
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+<style>
 
-        /* 🌟 شاشة التحميل الترحيبية (Splash Screen) */
-        #splashScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--apple-bg);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease, visibility 0.5s;
-        }
+*{
+    box-sizing:border-box;
+    font-family: Arial, sans-serif;
+}
 
-        .splash-logo {
-            font-size: 64px;
-            margin-bottom: 24px;
-            animation: pulseGlow 2s infinite ease-in-out;
-            position: relative;
-        }
+body{
+    margin:0;
+    background:#050505;
+    color:white;
+    overflow-x:hidden;
+}
 
-        .splash-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: -0.5px;
-            margin-bottom: 8px;
-        }
 
-        .splash-loader-text {
-            font-size: 13px;
-            color: var(--apple-text-muted);
-            animation: textFade 1.5s infinite ease-in-out;
-        }
+/* Splash */
 
-        /* حاوية التطبيق الرئيسية بعد الترحيب */
-        #appContent {
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-            display: none;
-            flex-direction: column;
-            width: 100%;
-            flex: 1;
-        }
+.splash{
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    animation:fade 1.5s;
+}
 
-        .dynamic-header {
-            background: var(--apple-card);
-            border-radius: 24px;
-            padding: 24px 16px;
-            margin-bottom: 16px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
+.splash h1{
+    font-size:38px;
+    font-weight:800;
+}
 
-        .user-badge {
-            display: inline-flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.06);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--apple-text-muted);
-            margin-bottom: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
+.splash p{
+    font-size:18px;
+    color:#aaa;
+}
 
-        .balance-label { font-size: 14px; color: var(--apple-text-muted); }
-        .balance-amount { font-size: 40px; font-weight: 700; color: #ffffff; margin-top: 4px; }
-        .currency { font-size: 20px; font-weight: 400; color: var(--apple-text-muted); margin-right: 4px; }
 
-        /* شبكة كروت بينتو المتناسقة */
-        .bento-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
-            width: 100%;
-        }
+@keyframes fade{
+    from{
+        opacity:0;
+    }
+    to{
+        opacity:1;
+    }
+}
 
-        .full-width-box { grid-column: span 2; }
 
-        .apple-card-btn {
-            background: var(--apple-card);
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 20px;
-            padding: 20px 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: space-between;
-            text-align: right;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            min-height: 120px;
-        }
+/* Main */
 
-        .inline-card {
-            flex-direction: row-reverse !important;
-            align-items: center !important;
-            justify-content: flex-end !important;
-            gap: 12px !important;
-            min-height: 120px;
-        }
+.app{
+    display:none;
+    padding:20px;
+}
 
-        .apple-card-btn:active { transform: scale(0.97); background: var(--apple-card-secondary); }
 
-        .card-icon {
-            font-size: 24px;
-            background: rgba(255, 255, 255, 0.05);
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 14px;
-        }
-        
-        .bento-grid .card-icon { margin-bottom: 12px; }
-        .inline-card .card-icon { margin-bottom: 0 !important; }
+/* Header */
 
-        .icon-video { color: var(--apple-purple); }
-        .icon-tasks { color: var(--apple-blue); }
-        .icon-invite { color: #ff9500; }
-        .icon-withdraw { color: var(--apple-green); }
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+}
 
-        .card-title { font-size: 16px; font-weight: 600; color: var(--apple-text); line-height: 1.3; }
-        .card-desc { font-size: 12px; color: var(--apple-text-muted); margin-top: 4px; }
 
-        .withdraw-row {
-            flex-direction: row-reverse !important;
-            align-items: center !important;
-            justify-content: flex-end !important;
-            min-height: auto !important;
-            padding: 20px 16px !important;
-            gap: 14px;
-        }
+.profile{
+    width:55px;
+    height:55px;
+    border-radius:50%;
+    background:#222;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:25px;
+}
 
-        .withdraw-row .card-icon { margin-bottom: 0 !important; }
-        .invite-box { flex-direction: column !important; align-items: flex-start !important; justify-content: space-between !important; min-height: 130px !important; }
 
-        /* واجهة السحب الثانية */
-        .withdraw-screen { display: none; animation: fadeIn 0.3s ease-out; }
-        .screen-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #ffffff; text-align: right; }
+.logo{
+    font-size:22px;
+    font-weight:bold;
+}
 
-        .apple-input {
-            width: 100%;
-            background: var(--apple-card);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 16px;
-            border-radius: 14px;
-            color: #ffffff;
-            font-size: 15px;
-            margin-bottom: 20px;
-            outline: none;
-            text-align: right;
-        }
 
-        .apple-input:focus { border-color: var(--apple-green); }
-        .btn-group { display: flex; gap: 10px; }
+/* Balance */
 
-        .action-btn {
-            flex: 1;
-            padding: 16px;
-            border: none;
-            border-radius: 14px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+.balance{
+    background:
+    linear-gradient(135deg,#171717,#080808);
 
-        .btn-submit { background: var(--apple-green); color: #000000; }
-        .btn-cancel { background: rgba(255, 255, 255, 0.08); color: var(--apple-text); }
-        .action-btn:active { transform: scale(0.96); }
-        .apple-footer { margin-top: auto; font-size: 11px; color: var(--apple-text-muted); text-align: center; padding: 16px 0; }
+    border-radius:25px;
+    padding:25px;
+    border:1px solid #333;
+    margin-bottom:25px;
+}
 
-        /* 🎭 الأنيميشن والتحريكات */
-        @keyframes pulseGlow {
-            0% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(191, 90, 242, 0)); }
-            50% { transform: scale(1.08); filter: drop-shadow(0 0 20px rgba(191, 90, 242, 0.4)); }
-            100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(191, 90, 242, 0)); }
-        }
 
-        @keyframes textFade {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
+.balance h3{
+    color:#aaa;
+    margin:0;
+}
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+
+.points{
+    font-size:35px;
+    font-weight:bold;
+    margin:10px 0;
+}
+
+
+.rate{
+    color:#bbb;
+}
+
+
+/* Cards */
+
+.grid{
+
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:15px;
+
+}
+
+
+.card{
+
+background:#111;
+border:1px solid #252525;
+border-radius:22px;
+height:140px;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+cursor:pointer;
+transition:.3s;
+
+}
+
+
+.card:hover{
+
+transform:scale(1.04);
+
+}
+
+
+.icon{
+
+font-size:35px;
+margin-bottom:10px;
+
+}
+
+
+.card span{
+
+font-size:16px;
+
+}
+
+
+/* Pages */
+
+.page{
+
+display:none;
+padding:20px;
+
+}
+
+
+.back{
+
+font-size:25px;
+cursor:pointer;
+margin-bottom:20px;
+
+}
+
+
+</style>
+
 </head>
+
+
 <body>
 
-    <!-- الشاشة الترحيبية الديناميكية (Splash Screen) -->
-    <div id="splashScreen">
-        <div class="splash-logo">🪙</div>
-        <div class="splash-title">SyriCoin</div>
-        <div class="splash-loader-text">جاري مزامنة محفظتك الرقمية الآمنة...</div>
-    </div>
 
-    <!-- محتوى التطبيق الفعلي -->
-    <div id="appContent">
-        
-        <!-- الواجهة الرئيسية الأولى -->
-        <div id="mainInterface">
-            <div class="dynamic-header">
-                <div id="username" class="user-badge">جاري المزامنة...</div>
-                <div class="balance-label">رصيدك الحالي من النقاط</div>
-                <div class="balance-amount"><span class="main-balance-val">0</span><span class="currency"> نقطة</span></div>
-            </div>
+<!-- Welcome -->
 
-            <div class="bento-grid">
-                <!-- كرت الفيديو -->
-                <div class="apple-card-btn" onclick="showVideoAd()">
-                    <div class="card-icon icon-video">✦</div>
-                    <div>
-                        <div class="card-title">مكافأة الفيديو</div>
-                        <div class="card-desc">+500 ليرة فوراً</div>
-                    </div>
-                </div>
+<div class="splash" id="splash">
 
-                <!-- كرت المهام الماسية -->
-                <div class="apple-card-btn inline-card" onclick="openCpaTasks()">
-                    <div class="card-icon icon-tasks">💎</div>
-                    <div class="card-title">المهام الماسية</div>
-                </div>
+<h1>أهلاً بك في SyriCoin</h1>
 
-                <!-- كرت دعوة الأصدقاء التسويقي -->
-                <div class="apple-card-btn full-width-box invite-box" onclick="inviteFriends()">
-                    <div class="card-icon icon-invite">👥</div>
-                    <div>
-                        <div class="card-title">دعوة الأصدقاء</div>
-                        <div class="card-desc" style="color: var(--apple-green); font-weight: 500;">ادعُ صديقك واحصل على نقاط</div>
-                    </div>
-                </div>
+<p>
+طريقة سهلة لكسب النقاط وتحويلها إلى رصيد أو كاش
+</p>
 
-                <!-- كرت السحب -->
+</div>
+
+
+
+
+<!-- Main -->
+
+<div class="app" id="app">
+
+
+<div class="header">
+
+<div class="logo">
+SyriCoin
+</div>
+
+
+<div class="profile"
+onclick="openPage('profile')">
+
+👤
+
+</div>
+
+</div>
+
+
+
+<div class="balance">
+
+<h3>
+رصيدك الحالي
+</h3>
+
+
+<div class="points">
+
+10,000 نقطة
+
+</div>
+
+
+<div class="rate">
+
+10,000 نقطة = 10,000 ليرة سورية
+
+</div>
+
+
+<div class="rate">
+
+كل نقطة = 1 ليرة سورية
+
+</div>
+
+
+</div>
+
+
+
+<div class="grid">
+
+
+<div class="card"
+onclick="openPage('videos')">
+
+<div class="icon">
+▶️
+</div>
+
+<span>
+مشاهدة الفيديوهات
+</span>
+
+</div>
+
+
+
+
+<div class="card"
+onclick="openPage('tasks')">
+
+<div class="icon">
+💎
+</div>
+
+<span>
+المهام الماسية
+</span>
+
+</div>
+
+
+
+
+<div class="card"
+onclick="openPage('wallet')">
+
+<div class="icon">
+💰
+</div>
+
+<span>
+تحويل النقاط
+</span>
+
+</div>
+
+
+
+
+<div class="card"
+onclick="openPage('invite')">
+
+<div class="icon">
+👥
+</div>
+
+<span>
+دعوة الأصدقاء
+</span>
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- Empty pages سيتم إضافة محتواها بالجزء الثاني -->
+
+
+<div class="page" id="profile">
+
+<div class="back" onclick="home()">←</div>
+
+<h2>
+التفاصيل الشخصية
+</h2>
+
+<p>
+الصورة الشخصية
+</p>
+
+<p>
+الاسم
+</p>
+
+<p>
+رقم الهاتف
+</p>
+
+<p>
+وسيلة الدفع المحفوظة
+</p>
+
+
+</div>
+
+
+
+<div class="page" id="videos">
+
+<div class="back" onclick="home()">←</div>
+
+<h2>
+مشاهدة الفيديوهات
+</h2>
+
+<p>
+سيتم إضافة نظام الريلز هنا
+</p>
+
+</div>
+
+
+
+<div class="page" id="tasks">
+
+<div class="back" onclick="home()">←</div>
+
+<h2>
+المهام الماسية
+</h2>
+
+<p>
+سيتم إضافة التطبيقات هنا
+</p>
+
+</div>
+
+
+
+
+<div class="page" id="wallet">
+
+<div class="back" onclick="home()">←</div>
+
+<h2>
+تحويل النقاط
+</h2>
+
+<p>
+تحويل رصيد هاتف
+</p>
+
+<p>
+تحويل كاش
+</p>
+
+</div>
+
+
+
+
+<div class="page" id="invite">
+
+<div class="back" onclick="home()">←</div>
+
+<h2>
+دعوة الأصدقاء
+</h2>
+
+<p>
+رابط الدعوة الخاص بك
+</p>
+
+</div>
+
+
+
+
+
+<script>
+
+
+setTimeout(()=>{
+
+document.getElementById("splash").style.display="none";
+
+document.getElementById("app").style.display="block";
+
+
+},1500);
+
+
+
+
+
+function openPage(page){
+
+
+document.getElementById("app").style.display="none";
+
+
+let pages=document.querySelectorAll(".page");
+
+pages.forEach(p=>p.style.display="none");
+
+
+document.getElementById(page).style.display="block";
+
+
+}
+
+
+
+
+function home(){
+
+let pages=document.querySelectorAll(".page");
+
+pages.forEach(p=>p.style.display="none");
+
+
+document.getElementById("app").style.display="block";
+
+
+}
+
+
+
+</script>
+
+
+</body>
+</html>
