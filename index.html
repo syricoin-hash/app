@@ -1,228 +1,103 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>SyriCoin</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق SyriCoin - المنصة المالية الرقمية</title>
+    <!-- استيراد خط Tajawal لتصميم مالي احترافي -->
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ============ SPLASH SCREEN ============ -->
-<section id="splash" class="splash">
-  <div class="splash__glow"></div>
-  <div class="splash__logo">
-    <span>S</span>
-  </div>
-  <h1 class="splash__title">SyriCoin</h1>
-  <p class="splash__tagline">اربح النقاط وحوّلها إلى رصيد</p>
-  <div class="splash__loader"><div class="splash__loader-bar"></div></div>
-</section>
-
-<!-- ============ APP SHELL ============ -->
-<div id="app" class="app hidden">
-
-  <!-- ---------- HOME ---------- -->
-  <main id="page-home" class="page page--active">
-
-    <header class="topbar">
-      <div class="topbar__brand">
-        <span class="topbar__mark">S</span>
-        <span class="topbar__name">SyriCoin</span>
-      </div>
-      <button class="topbar__avatar" data-nav="profile" aria-label="الملف الشخصي">
-        <img src="https://api.dicebear.com/7.x/initials/svg?seed=SC&backgroundColor=1AFF8C&textColor=050505" alt="صورة المستخدم">
-      </button>
+    <!-- الجزء العلوي (الشريط الاحترافي) -->
+    <header class="main-header">
+        <div class="logo">Syri<span>Coin</span></div>
+        <div class="status-badge">متصل</div>
     </header>
 
-    <section class="balance-card">
-      <div class="balance-card__glow"></div>
-      <span class="balance-card__label">الرصيد الحالي</span>
-      <div class="balance-card__amount">
-        <span id="balance-value" class="balance-card__value">10,000</span>
-        <span class="balance-card__unit">نقطة</span>
-      </div>
-      <div class="balance-card__divider"></div>
-      <div class="balance-card__row">
-        <span class="balance-card__sub">≈ <span id="balance-syp">10,000</span> ليرة سورية</span>
-        <span class="balance-card__rate">1 نقطة = 1 ل.س</span>
-      </div>
-    </section>
+    <!-- المحتوى الرئيسي المتغير -->
+    <main class="app-container">
+        
+        <!-- صفحة الرصيد الرئيسية (Home / Wallet View) -->
+        <section id="home-view" class="app-screen active">
+            <!-- بطاقة الرصيد الفاخرة الكبيرة -->
+            <div class="balance-card">
+                <span class="card-label">إجمالي الرصيد المتاح</span>
+                <h1 class="card-amount">1,250,500 <span class="currency">SC</span></h1>
+                <div class="card-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">الأرباح اليومية</span>
+                        <span class="stat-value profit">+2.4%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">الإحالات</span>
+                        <span class="stat-value">48 مستخدم</span>
+                    </div>
+                </div>
+            </div>
 
-    <div class="section-label">ابدأ الربح</div>
+            <!-- أزرار الإجراءات السريعة بوهج نيون (CTA) -->
+            <div class="action-buttons">
+                <button class="btn btn-primary btn-glow">إيداع سريع</button>
+                <button class="btn btn-secondary">سحب الأرباح</button>
+            </div>
+        </section>
 
-    <nav class="menu-grid">
-      <button class="menu-card" data-nav="videos">
-        <span class="menu-card__icon menu-card__icon--play">▶</span>
-        <span class="menu-card__title">مشاهدة الفيديوهات</span>
-        <span class="menu-card__hint">اكسب فورًا</span>
-      </button>
+        <!-- صفحة المهام (Tasks View - مخفية افتراضياً للتنقل) -->
+        <section id="tasks-view" class="app-screen">
+            <h2 class="section-title">المهام اليومية</h2>
+            <div class="glass-card task-item">
+                <div class="task-info">
+                    <h3>متابعة قنوات التواصل</h3>
+                    <p>احصل على عملات فورية</p>
+                </div>
+                <button class="btn btn-sm btn-glow">+50 SC</button>
+            </div>
+        </section>
 
-      <button class="menu-card" data-nav="tasks">
-        <span class="menu-card__icon menu-card__icon--diamond">◆</span>
-        <span class="menu-card__title">المهام الماسية</span>
-        <span class="menu-card__hint">مكافآت أعلى</span>
-      </button>
+        <!-- بقية الصفحات (Wallet, Invite, Profile) تتبع نفس بنية القوالب الزجاجية -->
+    </main>
 
-      <button class="menu-card" data-nav="wallet">
-        <span class="menu-card__icon menu-card__icon--wallet">●</span>
-        <span class="menu-card__title">تحويل النقاط</span>
-        <span class="menu-card__hint">المحفظة</span>
-      </button>
-
-      <button class="menu-card" data-nav="invite">
-        <span class="menu-card__icon menu-card__icon--people">◈</span>
-        <span class="menu-card__title">دعوة الأصدقاء</span>
-        <span class="menu-card__hint">اربح من الإحالات</span>
-      </button>
+    <!-- شريط التنقل السفلي السلس (Bottom Navigation Bar) -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-target="home-view">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">الرئيسية</span>
+        </button>
+        <button class="nav-item" data-target="tasks-view">
+            <span class="nav-icon">🎯</span>
+            <span class="nav-text">المهام</span>
+        </button>
+        <button class="nav-item" data-target="wallet-view">
+            <span class="nav-icon">💼</span>
+            <span class="nav-text">المحفظة</span>
+        </button>
+        <button class="nav-item" data-target="invite-view">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">دعوة</span>
+        </button>
+        <button class="nav-item" data-target="profile-view">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text">الحساب</span>
+        </button>
     </nav>
 
-    <div class="section-label">نشاط أخير</div>
-    <ul id="home-activity" class="activity-list"></ul>
-  </main>
-
-  <!-- ---------- VIDEOS ---------- -->
-  <main id="page-videos" class="page">
-    <header class="subbar">
-      <button class="subbar__back" data-back>‹</button>
-      <h2 class="subbar__title">مشاهدة الفيديوهات</h2>
-      <span class="subbar__spacer"></span>
-    </header>
-    <p class="page-intro">شاهد الفيديوهات الإعلانية بالكامل لجمع النقاط.</p>
-    <ul id="video-list" class="task-list"></ul>
-  </main>
-
-  <!-- ---------- TASKS ---------- -->
-  <main id="page-tasks" class="page">
-    <header class="subbar">
-      <button class="subbar__back" data-back>‹</button>
-      <h2 class="subbar__title">المهام الماسية</h2>
-      <span class="subbar__spacer"></span>
-    </header>
-    <p class="page-intro">حمّل التطبيقات ونفّذ المهام لربح نقاط إضافية.</p>
-    <ul id="task-list" class="task-list"></ul>
-  </main>
-
-  <!-- ---------- WALLET ---------- -->
-  <main id="page-wallet" class="page">
-    <header class="subbar">
-      <button class="subbar__back" data-back>‹</button>
-      <h2 class="subbar__title">المحفظة</h2>
-      <span class="subbar__spacer"></span>
-    </header>
-
-    <section class="wallet-balance">
-      <span class="wallet-balance__label">رصيدك</span>
-      <span id="wallet-balance-value" class="wallet-balance__value">10,000 نقطة</span>
-    </section>
-
-    <div class="wallet-actions">
-      <button class="wallet-action" data-action="convert">
-        <span class="wallet-action__icon">⇄</span>
-        <span>تحويل النقاط</span>
-      </button>
-      <button class="wallet-action" data-action="withdraw">
-        <span class="wallet-action__icon">↓</span>
-        <span>طلب سحب</span>
-      </button>
-    </div>
-
-    <div class="section-label">سجل العمليات</div>
-    <div class="ledger">
-      <div class="ledger__head">
-        <span>التاريخ</span>
-        <span>النوع</span>
-        <span>المبلغ</span>
-        <span>الحالة</span>
-      </div>
-      <ul id="ledger-list" class="ledger__body"></ul>
-    </div>
-  </main>
-
-  <!-- ---------- INVITE ---------- -->
-  <main id="page-invite" class="page">
-    <header class="subbar">
-      <button class="subbar__back" data-back>‹</button>
-      <h2 class="subbar__title">دعوة الأصدقاء</h2>
-      <span class="subbar__spacer"></span>
-    </header>
-
-    <p class="page-intro">شارك رابطك واربح نقاطًا عن كل صديق ينضم.</p>
-
-    <div class="invite-link">
-      <span id="invite-link-text" class="invite-link__text">t.me/SyriCoinBot?start=ref_000000</span>
-      <button id="copy-link-btn" class="invite-link__copy">نسخ الرابط</button>
-    </div>
-
-    <div class="stat-row">
-      <div class="stat-box">
-        <span id="invite-count" class="stat-box__value">0</span>
-        <span class="stat-box__label">عدد الدعوات</span>
-      </div>
-      <div class="stat-box">
-        <span id="invite-earnings" class="stat-box__value">0</span>
-        <span class="stat-box__label">أرباح الإحالات</span>
-      </div>
-    </div>
-  </main>
-
-  <!-- ---------- PROFILE ---------- -->
-  <main id="page-profile" class="page">
-    <header class="subbar">
-      <button class="subbar__back" data-back>‹</button>
-      <h2 class="subbar__title">الملف الشخصي</h2>
-      <span class="subbar__spacer"></span>
-    </header>
-
-    <section class="profile-head">
-      <img class="profile-head__avatar" src="https://api.dicebear.com/7.x/initials/svg?seed=SC&backgroundColor=1AFF8C&textColor=050505" alt="صورة المستخدم">
-      <span id="profile-username" class="profile-head__name">مستخدم SyriCoin</span>
-      <span id="profile-id" class="profile-head__id">Telegram ID: 000000000</span>
-    </section>
-
-    <div class="stat-row stat-row--three">
-      <div class="stat-box">
-        <span id="profile-total" class="stat-box__value">10,000</span>
-        <span class="stat-box__label">إجمالي الأرباح</span>
-      </div>
-      <div class="stat-box">
-        <span id="profile-tasks" class="stat-box__value">0</span>
-        <span class="stat-box__label">المهام المكتملة</span>
-      </div>
-      <div class="stat-box">
-        <span id="profile-refs" class="stat-box__value">0</span>
-        <span class="stat-box__label">الإحالات</span>
-      </div>
-    </div>
-  </main>
-
-  <!-- ---------- BOTTOM NAV ---------- -->
-  <nav class="tabbar">
-    <button class="tabbar__item tabbar__item--active" data-nav="home">
-      <span class="tabbar__icon">⌂</span><span>الرئيسية</span>
-    </button>
-    <button class="tabbar__item" data-nav="videos">
-      <span class="tabbar__icon">▶</span><span>فيديوهات</span>
-    </button>
-    <button class="tabbar__item" data-nav="wallet">
-      <span class="tabbar__icon">●</span><span>المحفظة</span>
-    </button>
-    <button class="tabbar__item" data-nav="invite">
-      <span class="tabbar__icon">◈</span><span>الدعوات</span>
-    </button>
-    <button class="tabbar__item" data-nav="profile">
-      <span class="tabbar__icon">☺</span><span>حسابي</span>
-    </button>
-  </nav>
-
-</div>
-
-<!-- ---------- TOAST ---------- -->
-<div id="toast" class="toast"></div>
-
-<script src="script.js"></script>
+    <!-- نص برمي بسيط لتفعيل التنقل السلس بين الشاشات واختبار الواجهة -->
+    <script>
+        document.querySelectorAll('.nav-item').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.app-screen').forEach(screen => screen.classList.remove('active'));
+                
+                button.classList.add('active');
+                const target = button.getAttribute('data-target');
+                const activeScreen = document.getElementById(target);
+                if (activeScreen) activeScreen.classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>
