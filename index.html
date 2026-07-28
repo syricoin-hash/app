@@ -2,201 +2,150 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SyriCoin - Telegram Mini App</title>
-    <!-- استيراد الخطوط لتصميم مالي احترافي وموثوق -->
-    <link rel="preconnect" href="https://googleapis.com">
-    <link rel="preconnect" href="https://gstatic.com" crossorigin>
-    <link href="https://googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyriCoin - منصة الربح الرقمي</title>
 </head>
 <body>
 
-    <!-- 1. Header علوي مخصص لـ Telegram -->
-    <header class="app-header">
-        <div class="user-profile-header">
-            <div class="avatar-wrapper">
-                <img src="https://placeholder.com" alt="Avatar" class="user-avatar" id="tg-avatar">
-                <div class="online-indicator"></div>
-            </div>
-            <div class="user-meta">
-                <h4 class="user-name" id="tg-username">المستخدم الرقمي</h4>
-                <span class="platform-tag">SyriCoin Member</span>
+    <!-- 1. Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-content">
+            <div class="logo-placeholder">شعار SyriCoin</div>
+            <h1>SyriCoin</h1>
+            <div class="loading-indicator">جاري التحميل...</div>
+        </div>
+    </div>
+
+    <!-- Main App Wrapper -->
+    <div id="app">
+
+        <!-- 2. Home Page -->
+        <main id="home-page" class="page">
+            
+            <!-- Header -->
+            <header class="app-header">
+                <div class="user-profile">
+                    <div class="avatar-placeholder">صورة</div>
+                    <span id="username-display">اسم المستخدم</span>
+                </div>
+                <div class="app-brand">SyriCoin</div>
+                <button id="settings-btn" aria-label="الإعدادات">الإعدادات</button>
+            </header>
+
+            <!-- Balance Card -->
+            <section class="balance-card">
+                <div class="balance-main">
+                    <h2>الرصيد الحالي</h2>
+                    <div class="points-value">0 <span class="unit">نقطة</span></div>
+                    <div class="syp-value">القيمة: 0 ليرة سورية</div>
+                </div>
+                <div class="earnings-summary">
+                    <div>إجمالي الأرباح: <span>0</span></div>
+                    <div>أرباح اليوم: <span>0</span></div>
+                </div>
+                <div class="balance-actions">
+                    <button id="request-withdrawal-btn">طلب السحب</button>
+                    <button id="wallet-history-btn">المحفظة والسجل</button>
+                </div>
+            </section>
+
+            <!-- Earning Methods -->
+            <section class="earning-methods">
+                <h3>طرق الربح</h3>
+                <div class="methods-grid">
+                    <button class="method-card" data-target="videos-page">مشاهدة الفيديوهات</button>
+                    <button class="method-card" data-target="cpa-page">المهام الماسية CPA</button>
+                    <button class="method-card" data-target="referrals-page">نظام الإحالات</button>
+                </div>
+            </section>
+
+            <!-- Reels Section -->
+            <section class="reels-section">
+                <h3>ريلز مربحة</h3>
+                <div class="reels-container">
+                    <div class="reel-card">
+                        <div class="reel-thumb">صورة</div>
+                        <h4 class="reel-title">عنوان الفيديو الأول</h4>
+                        <span class="reel-reward">+ نقاط</span>
+                    </div>
+                    <div class="reel-card">
+                        <div class="reel-thumb">صورة</div>
+                        <h4 class="reel-title">عنوان الفيديو الثاني</h4>
+                        <span class="reel-reward">+ نقاط</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Activity -->
+            <section class="recent-activity">
+                <h3>النشاط الأخير</h3>
+                <ul class="activity-list">
+                    <li id="last-task">آخر مهمة: لا يوجد نشاط حالي</li>
+                    <li id="last-video">آخر فيديو: لا يوجد نشاط حالي</li>
+                    <li id="last-withdrawal">آخر عملية سحب: لا يوجد نشاط حالي</li>
+                </ul>
+            </section>
+
+        </main>
+
+        <!-- 3. Internal Pages -->
+
+        <!-- Videos Page -->
+        <div id="videos-page" class="internal-page">
+            <header class="internal-header">
+                <button class="back-btn" data-target="home-page">رجوع</button>
+                <h2>صفحة الفيديوهات</h2>
+            </header>
+            <div class="internal-content">
+                <!-- سيتم إدراج قائمة الفيديوهات لاحقاً -->
             </div>
         </div>
-        <div class="header-actions">
-            <button class="icon-btn" id="header-profile-btn">⚙️</button>
+
+        <!-- CPA Tasks Page -->
+        <div id="cpa-page" class="internal-page">
+            <header class="internal-header">
+                <button class="back-btn" data-target="home-page">رجوع</button>
+                <h2>مهام CPA الماسية</h2>
+            </header>
+            <div class="internal-content">
+                <!-- سيتم إدراج مهام CPA لاحقاً -->
+            </div>
         </div>
-    </header>
 
-    <!-- المحتوى الرئيسي المتغير المتوافق مع الهواتف أولاً -->
-    <main class="app-main-content">
-
-        <!-- ================= الصفحة الرئيسية (Home View) ================= -->
-        <section id="home-view" class="app-screen active">
-            
-            <!-- 2. بطاقة الأرباح الفاخرة الكبيرة -->
-            <div class="premium-balance-card">
-                <div class="card-glow-effect"></div>
-                <span class="card-context-title">الرصيد والتقييم المالي</span>
-                <div class="main-crypto-amount">
-                    <h1 id="balance-sc">2,450,180</h1>
-                    <span class="sc-badge">SC</span>
-                </div>
-                
-                <div class="fiat-conversion">
-                    <span class="points-sub">🪙 45,200 نقطة</span>
-                    <span class="fiat-value">≈ 325,400 ل.س</span>
-                </div>
-
-                <div class="card-grid-stats">
-                    <div class="grid-stat-block">
-                        <span class="block-label">أرباح اليوم</span>
-                        <span class="block-value positive">+4,500 SC</span>
-                    </div>
-                    <div class="grid-stat-block">
-                        <span class="block-label">إجمالي الأرباح</span>
-                        <span class="block-value">890,200 SC</span>
-                    </div>
-                </div>
-
-                <div class="card-action-triggers">
-                    <button class="action-trigger-btn primary-trigger" data-route="wallet-view"> طلب السحب 💳</button>
-                    <button class="action-trigger-btn secondary-trigger" data-route="wallet-view">المحفظة والسجل</button>
-                </div>
+        <!-- Wallet & Withdrawal Page -->
+        <div id="wallet-page" class="internal-page">
+            <header class="internal-header">
+                <button class="back-btn" data-target="home-page">رجوع</button>
+                <h2>المحفظة والسحب</h2>
+            </header>
+            <div class="internal-content">
+                <!-- سيتم إدراج تفاصيل المحفظة ونموذج السحب لاحقاً -->
             </div>
+        </div>
 
-            <!-- 3. قسم طرق الربح (Earning Vectors) -->
-            <div class="content-section">
-                <h3 class="section-heading">🎯 طرق الربح المتاحة</h3>
-                
-                <!-- بطاقة الربح: الفيديوهات -->
-                <div class="vector-card glass-card" data-route="videos-view">
-                    <div class="vector-icon">📺</div>
-                    <div class="vector-details">
-                        <h4>مشاهدة الفيديوهات والمنصات</h4>
-                        <p>شاهد المحتوى المالي والتقني مقابل نقاط فورية</p>
-                        <span class="vector-reward">تصل إلى +300 SC / فيديو</span>
-                    </div>
-                    <button class="vector-go-btn">بدء</button>
-                </div>
-
-                <!-- بطاقة الربح: المهام الماسية -->
-                <div class="vector-card glass-card" data-route="tasks-view">
-                    <div class="vector-icon">💎</div>
-                    <div class="vector-details">
-                        <h4>المهام الماسية والعروض (CPA)</h4>
-                        <p>تحميل تطبيقات، ألعاب وتجاوز العروض الكبيرة</p>
-                        <span class="vector-reward-high">مكافآت مرتفعة جداً</span>
-                    </div>
-                    <button class="vector-go-btn">استعراض</button>
-                </div>
-
-                <!-- بطاقة الربح: الإحالات -->
-                <div class="vector-card glass-card" data-route="invite-view">
-                    <div class="vector-icon">👥</div>
-                    <div class="vector-details">
-                        <h4>نظام الإحالات وبناء الشبكة</h4>
-                        <p>ادعُ أصدقائك واربح نسبة مستدامة من إنتاجهم</p>
-                        <span class="vector-reward">10% عمولة مدى الحياة</span>
-                    </div>
-                    <button class="vector-go-btn">دعوة</button>
-                </div>
+        <!-- Referrals Page -->
+        <div id="referrals-page" class="internal-page">
+            <header class="internal-header">
+                <button class="back-btn" data-target="home-page">رجوع</button>
+                <h2>نظام الإحالات</h2>
+            </header>
+            <div class="internal-content">
+                <!-- سيتم إدراج رابط الإحالة والإحصائيات لاحقاً -->
             </div>
+        </div>
 
-            <!-- 4. قسم Reels المدمج الممتع -->
-            <div class="content-section">
-                <div class="section-header-flex">
-                    <h3 class="section-heading">🔥 مقاطع Reels السريعة</h3>
-                    <span class="section-badge-live">مباشر ربحي</span>
-                </div>
-                <div class="reels-horizontal-scroller">
-                    <div class="reel-preview-card" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), transparent), url('https://placeholder.com');">
-                        <div class="reel-reward-tag">⚡ +15 SC</div>
-                        <span class="reel-title">شرح الـ Web3</span>
-                    </div>
-                    <div class="reel-preview-card" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), transparent), url('https://placeholder.com');">
-                        <div class="reel-reward-tag">⚡ +15 SC</div>
-                        <span class="reel-title">تداول ذكي</span>
-                    </div>
-                    <div class="reel-preview-card" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), transparent), url('https://placeholder.com');">
-                        <div class="reel-reward-tag">⚡ +15 SC</div>
-                        <span class="reel-title">تحديثات التطبيق</span>
-                    </div>
-                </div>
+        <!-- Profile Page -->
+        <div id="profile-page" class="internal-page">
+            <header class="internal-header">
+                <button class="back-btn" data-target="home-page">رجوع</button>
+                <h2>الحساب الشخصي</h2>
+            </header>
+            <div class="internal-content">
+                <!-- سيتم إدراج معلومات الحساب والإعدادات لاحقاً -->
             </div>
+        </div>
 
-            <!-- 5. قسم النشاط الأخير -->
-            <div class="content-section">
-                <h3 class="section-heading">🕒 النشاط الأخير وتحديثات الحساب</h3>
-                <div class="activity-feed glass-card">
-                    <div class="feed-item">
-                        <div class="feed-icon done">✓</div>
-                        <div class="feed-info">
-                            <h5>اكتمال مهمة "تحميل تطبيق كاش"</h5>
-                            <span class="feed-time">منذ دقيقتين</span>
-                        </div>
-                        <span class="feed-amount positive">+500 SC</span>
-                    </div>
-                    <div class="feed-item">
-                        <div class="feed-icon withdraw">💳</div>
-                        <div class="feed-info">
-                            <h5>طلب سحب أرباح (قيد المعالجة)</h5>
-                            <span class="feed-time">منذ ساعتين</span>
-                        </div>
-                        <span class="feed-amount text-silver">-50,000 ل.س</span>
-                    </div>
-                </div>
-            </div>
+    </div>
 
-        </section>
-
-        <!-- ================= صفحة المهام (Tasks View) ================= -->
-        <section id="tasks-view" class="app-screen">
-            <h2 class="page-main-title">💎 المهام الماسية والعروض</h2>
-            <p class="page-subtitle">نفذ العروض والمهام الموثوقة لجمع الأرباح بسرعة</p>
-            
-            <div class="tasks-container-grid">
-                <!-- كارد مهمة 1 -->
-                <div class="task-premium-card glass-card">
-                    <div class="task-header-meta">
-                        <div class="task-brand-img">🎮</div>
-                        <div class="task-titles">
-                            <h4>تحميل ولعب Yalla Ludo</h4>
-                            <p>قم بالوصول للمستوى 5 في اللعبة</p>
-                        </div>
-                    </div>
-                    <div class="task-footer-metrics">
-                        <div class="metric-pill font-reward">+500 نقطة</div>
-                        <div class="metric-pill">⏱ دقيقتان</div>
-                        <button class="task-action-btn btn-glow">ابدأ المهمة</button>
-                    </div>
-                </div>
-
-                <!-- كارد مهمة 2 -->
-                <div class="task-premium-card glass-card">
-                    <div class="task-header-meta">
-                        <div class="task-brand-img">📱</div>
-                        <div class="task-titles">
-                            <h4>التسجيل في منصة البنك الرقمي</h4>
-                            <p>افتح حساباً تجريبياً مجاناً</p>
-                        </div>
-                    </div>
-                    <div class="task-footer-metrics">
-                        <div class="metric-pill font-reward">+1200 نقطة</div>
-                        <div class="metric-pill">⏱ 5 دقائق</div>
-                        <button class="task-action-btn btn-glow">ابدأ المهمة</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= صفحة الفيديوهات (Videos View) ================= -->
-        <section id="videos-view" class="app-screen">
-            <h2 class="page-main-title">📺 منصة المحتوى المرئي</h2>
-            <p class="page-subtitle">شاهد الفيديوهات التعليمية والترويجية الكاملة لربح النقاط</p>
-
-            <div class="videos-media-layout">
-                <!-- كارد فيديو 1 -->
-                <div class="video-media-card glass-card">
-                    <div class="video-thumbnail-wrapper">
+</body>
+</html>
