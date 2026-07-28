@@ -2,501 +2,227 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>SyriCoin Mini App</title>
-
-<style>
-
-*{
-    box-sizing:border-box;
-    font-family: Arial, sans-serif;
-}
-
-body{
-    margin:0;
-    background:#050505;
-    color:white;
-    overflow-x:hidden;
-}
-
-
-/* Splash */
-
-.splash{
-    height:100vh;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    animation:fade 1.5s;
-}
-
-.splash h1{
-    font-size:38px;
-    font-weight:800;
-}
-
-.splash p{
-    font-size:18px;
-    color:#aaa;
-}
-
-
-@keyframes fade{
-    from{
-        opacity:0;
-    }
-    to{
-        opacity:1;
-    }
-}
-
-
-/* Main */
-
-.app{
-    display:none;
-    padding:20px;
-}
-
-
-/* Header */
-
-.header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:25px;
-}
-
-
-.profile{
-    width:55px;
-    height:55px;
-    border-radius:50%;
-    background:#222;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:25px;
-}
-
-
-.logo{
-    font-size:22px;
-    font-weight:bold;
-}
-
-
-/* Balance */
-
-.balance{
-    background:
-    linear-gradient(135deg,#171717,#080808);
-
-    border-radius:25px;
-    padding:25px;
-    border:1px solid #333;
-    margin-bottom:25px;
-}
-
-
-.balance h3{
-    color:#aaa;
-    margin:0;
-}
-
-
-.points{
-    font-size:35px;
-    font-weight:bold;
-    margin:10px 0;
-}
-
-
-.rate{
-    color:#bbb;
-}
-
-
-/* Cards */
-
-.grid{
-
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:15px;
-
-}
-
-
-.card{
-
-background:#111;
-border:1px solid #252525;
-border-radius:22px;
-height:140px;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-cursor:pointer;
-transition:.3s;
-
-}
-
-
-.card:hover{
-
-transform:scale(1.04);
-
-}
-
-
-.icon{
-
-font-size:35px;
-margin-bottom:10px;
-
-}
-
-
-.card span{
-
-font-size:16px;
-
-}
-
-
-/* Pages */
-
-.page{
-
-display:none;
-padding:20px;
-
-}
-
-
-.back{
-
-font-size:25px;
-cursor:pointer;
-margin-bottom:20px;
-
-}
-
-
-</style>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>SyriCoin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
-
-
 <body>
 
+<!-- ============ SPLASH SCREEN ============ -->
+<section id="splash" class="splash">
+  <div class="splash__glow"></div>
+  <div class="splash__logo">
+    <span>S</span>
+  </div>
+  <h1 class="splash__title">SyriCoin</h1>
+  <p class="splash__tagline">اربح النقاط وحوّلها إلى رصيد</p>
+  <div class="splash__loader"><div class="splash__loader-bar"></div></div>
+</section>
 
-<!-- Welcome -->
+<!-- ============ APP SHELL ============ -->
+<div id="app" class="app hidden">
 
-<div class="splash" id="splash">
+  <!-- ---------- HOME ---------- -->
+  <main id="page-home" class="page page--active">
 
-<h1>أهلاً بك في SyriCoin</h1>
+    <header class="topbar">
+      <div class="topbar__brand">
+        <span class="topbar__mark">S</span>
+        <span class="topbar__name">SyriCoin</span>
+      </div>
+      <button class="topbar__avatar" data-nav="profile" aria-label="الملف الشخصي">
+        <img src="https://api.dicebear.com/7.x/initials/svg?seed=SC&backgroundColor=1AFF8C&textColor=050505" alt="صورة المستخدم">
+      </button>
+    </header>
 
-<p>
-طريقة سهلة لكسب النقاط وتحويلها إلى رصيد أو كاش
-</p>
+    <section class="balance-card">
+      <div class="balance-card__glow"></div>
+      <span class="balance-card__label">الرصيد الحالي</span>
+      <div class="balance-card__amount">
+        <span id="balance-value" class="balance-card__value">10,000</span>
+        <span class="balance-card__unit">نقطة</span>
+      </div>
+      <div class="balance-card__divider"></div>
+      <div class="balance-card__row">
+        <span class="balance-card__sub">≈ <span id="balance-syp">10,000</span> ليرة سورية</span>
+        <span class="balance-card__rate">1 نقطة = 1 ل.س</span>
+      </div>
+    </section>
+
+    <div class="section-label">ابدأ الربح</div>
+
+    <nav class="menu-grid">
+      <button class="menu-card" data-nav="videos">
+        <span class="menu-card__icon menu-card__icon--play">▶</span>
+        <span class="menu-card__title">مشاهدة الفيديوهات</span>
+        <span class="menu-card__hint">اكسب فورًا</span>
+      </button>
+
+      <button class="menu-card" data-nav="tasks">
+        <span class="menu-card__icon menu-card__icon--diamond">◆</span>
+        <span class="menu-card__title">المهام الماسية</span>
+        <span class="menu-card__hint">مكافآت أعلى</span>
+      </button>
+
+      <button class="menu-card" data-nav="wallet">
+        <span class="menu-card__icon menu-card__icon--wallet">●</span>
+        <span class="menu-card__title">تحويل النقاط</span>
+        <span class="menu-card__hint">المحفظة</span>
+      </button>
+
+      <button class="menu-card" data-nav="invite">
+        <span class="menu-card__icon menu-card__icon--people">◈</span>
+        <span class="menu-card__title">دعوة الأصدقاء</span>
+        <span class="menu-card__hint">اربح من الإحالات</span>
+      </button>
+    </nav>
+
+    <div class="section-label">نشاط أخير</div>
+    <ul id="home-activity" class="activity-list"></ul>
+  </main>
+
+  <!-- ---------- VIDEOS ---------- -->
+  <main id="page-videos" class="page">
+    <header class="subbar">
+      <button class="subbar__back" data-back>‹</button>
+      <h2 class="subbar__title">مشاهدة الفيديوهات</h2>
+      <span class="subbar__spacer"></span>
+    </header>
+    <p class="page-intro">شاهد الفيديوهات الإعلانية بالكامل لجمع النقاط.</p>
+    <ul id="video-list" class="task-list"></ul>
+  </main>
+
+  <!-- ---------- TASKS ---------- -->
+  <main id="page-tasks" class="page">
+    <header class="subbar">
+      <button class="subbar__back" data-back>‹</button>
+      <h2 class="subbar__title">المهام الماسية</h2>
+      <span class="subbar__spacer"></span>
+    </header>
+    <p class="page-intro">حمّل التطبيقات ونفّذ المهام لربح نقاط إضافية.</p>
+    <ul id="task-list" class="task-list"></ul>
+  </main>
+
+  <!-- ---------- WALLET ---------- -->
+  <main id="page-wallet" class="page">
+    <header class="subbar">
+      <button class="subbar__back" data-back>‹</button>
+      <h2 class="subbar__title">المحفظة</h2>
+      <span class="subbar__spacer"></span>
+    </header>
+
+    <section class="wallet-balance">
+      <span class="wallet-balance__label">رصيدك</span>
+      <span id="wallet-balance-value" class="wallet-balance__value">10,000 نقطة</span>
+    </section>
+
+    <div class="wallet-actions">
+      <button class="wallet-action" data-action="convert">
+        <span class="wallet-action__icon">⇄</span>
+        <span>تحويل النقاط</span>
+      </button>
+      <button class="wallet-action" data-action="withdraw">
+        <span class="wallet-action__icon">↓</span>
+        <span>طلب سحب</span>
+      </button>
+    </div>
+
+    <div class="section-label">سجل العمليات</div>
+    <div class="ledger">
+      <div class="ledger__head">
+        <span>التاريخ</span>
+        <span>النوع</span>
+        <span>المبلغ</span>
+        <span>الحالة</span>
+      </div>
+      <ul id="ledger-list" class="ledger__body"></ul>
+    </div>
+  </main>
+
+  <!-- ---------- INVITE ---------- -->
+  <main id="page-invite" class="page">
+    <header class="subbar">
+      <button class="subbar__back" data-back>‹</button>
+      <h2 class="subbar__title">دعوة الأصدقاء</h2>
+      <span class="subbar__spacer"></span>
+    </header>
+
+    <p class="page-intro">شارك رابطك واربح نقاطًا عن كل صديق ينضم.</p>
+
+    <div class="invite-link">
+      <span id="invite-link-text" class="invite-link__text">t.me/SyriCoinBot?start=ref_000000</span>
+      <button id="copy-link-btn" class="invite-link__copy">نسخ الرابط</button>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box">
+        <span id="invite-count" class="stat-box__value">0</span>
+        <span class="stat-box__label">عدد الدعوات</span>
+      </div>
+      <div class="stat-box">
+        <span id="invite-earnings" class="stat-box__value">0</span>
+        <span class="stat-box__label">أرباح الإحالات</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- ---------- PROFILE ---------- -->
+  <main id="page-profile" class="page">
+    <header class="subbar">
+      <button class="subbar__back" data-back>‹</button>
+      <h2 class="subbar__title">الملف الشخصي</h2>
+      <span class="subbar__spacer"></span>
+    </header>
+
+    <section class="profile-head">
+      <img class="profile-head__avatar" src="https://api.dicebear.com/7.x/initials/svg?seed=SC&backgroundColor=1AFF8C&textColor=050505" alt="صورة المستخدم">
+      <span id="profile-username" class="profile-head__name">مستخدم SyriCoin</span>
+      <span id="profile-id" class="profile-head__id">Telegram ID: 000000000</span>
+    </section>
+
+    <div class="stat-row stat-row--three">
+      <div class="stat-box">
+        <span id="profile-total" class="stat-box__value">10,000</span>
+        <span class="stat-box__label">إجمالي الأرباح</span>
+      </div>
+      <div class="stat-box">
+        <span id="profile-tasks" class="stat-box__value">0</span>
+        <span class="stat-box__label">المهام المكتملة</span>
+      </div>
+      <div class="stat-box">
+        <span id="profile-refs" class="stat-box__value">0</span>
+        <span class="stat-box__label">الإحالات</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- ---------- BOTTOM NAV ---------- -->
+  <nav class="tabbar">
+    <button class="tabbar__item tabbar__item--active" data-nav="home">
+      <span class="tabbar__icon">⌂</span><span>الرئيسية</span>
+    </button>
+    <button class="tabbar__item" data-nav="videos">
+      <span class="tabbar__icon">▶</span><span>فيديوهات</span>
+    </button>
+    <button class="tabbar__item" data-nav="wallet">
+      <span class="tabbar__icon">●</span><span>المحفظة</span>
+    </button>
+    <button class="tabbar__item" data-nav="invite">
+      <span class="tabbar__icon">◈</span><span>الدعوات</span>
+    </button>
+    <button class="tabbar__item" data-nav="profile">
+      <span class="tabbar__icon">☺</span><span>حسابي</span>
+    </button>
+  </nav>
 
 </div>
 
+<!-- ---------- TOAST ---------- -->
+<div id="toast" class="toast"></div>
 
-
-
-<!-- Main -->
-
-<div class="app" id="app">
-
-
-<div class="header">
-
-<div class="logo">
-SyriCoin
-</div>
-
-
-<div class="profile"
-onclick="openPage('profile')">
-
-👤
-
-</div>
-
-</div>
-
-
-
-<div class="balance">
-
-<h3>
-رصيدك الحالي
-</h3>
-
-
-<div class="points">
-
-10,000 نقطة
-
-</div>
-
-
-<div class="rate">
-
-10,000 نقطة = 10,000 ليرة سورية
-
-</div>
-
-
-<div class="rate">
-
-كل نقطة = 1 ليرة سورية
-
-</div>
-
-
-</div>
-
-
-
-<div class="grid">
-
-
-<div class="card"
-onclick="openPage('videos')">
-
-<div class="icon">
-▶️
-</div>
-
-<span>
-مشاهدة الفيديوهات
-</span>
-
-</div>
-
-
-
-
-<div class="card"
-onclick="openPage('tasks')">
-
-<div class="icon">
-💎
-</div>
-
-<span>
-المهام الماسية
-</span>
-
-</div>
-
-
-
-
-<div class="card"
-onclick="openPage('wallet')">
-
-<div class="icon">
-💰
-</div>
-
-<span>
-تحويل النقاط
-</span>
-
-</div>
-
-
-
-
-<div class="card"
-onclick="openPage('invite')">
-
-<div class="icon">
-👥
-</div>
-
-<span>
-دعوة الأصدقاء
-</span>
-
-</div>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-<!-- Empty pages سيتم إضافة محتواها بالجزء الثاني -->
-
-
-<div class="page" id="profile">
-
-<div class="back" onclick="home()">←</div>
-
-<h2>
-التفاصيل الشخصية
-</h2>
-
-<p>
-الصورة الشخصية
-</p>
-
-<p>
-الاسم
-</p>
-
-<p>
-رقم الهاتف
-</p>
-
-<p>
-وسيلة الدفع المحفوظة
-</p>
-
-
-</div>
-
-
-
-<div class="page" id="videos">
-
-<div class="back" onclick="home()">←</div>
-
-<h2>
-مشاهدة الفيديوهات
-</h2>
-
-<p>
-سيتم إضافة نظام الريلز هنا
-</p>
-
-</div>
-
-
-
-<div class="page" id="tasks">
-
-<div class="back" onclick="home()">←</div>
-
-<h2>
-المهام الماسية
-</h2>
-
-<p>
-سيتم إضافة التطبيقات هنا
-</p>
-
-</div>
-
-
-
-
-<div class="page" id="wallet">
-
-<div class="back" onclick="home()">←</div>
-
-<h2>
-تحويل النقاط
-</h2>
-
-<p>
-تحويل رصيد هاتف
-</p>
-
-<p>
-تحويل كاش
-</p>
-
-</div>
-
-
-
-
-<div class="page" id="invite">
-
-<div class="back" onclick="home()">←</div>
-
-<h2>
-دعوة الأصدقاء
-</h2>
-
-<p>
-رابط الدعوة الخاص بك
-</p>
-
-</div>
-
-
-
-
-
-<script>
-
-
-setTimeout(()=>{
-
-document.getElementById("splash").style.display="none";
-
-document.getElementById("app").style.display="block";
-
-
-},1500);
-
-
-
-
-
-function openPage(page){
-
-
-document.getElementById("app").style.display="none";
-
-
-let pages=document.querySelectorAll(".page");
-
-pages.forEach(p=>p.style.display="none");
-
-
-document.getElementById(page).style.display="block";
-
-
-}
-
-
-
-
-function home(){
-
-let pages=document.querySelectorAll(".page");
-
-pages.forEach(p=>p.style.display="none");
-
-
-document.getElementById("app").style.display="block";
-
-
-}
-
-
-
-</script>
-
-
+<script src="script.js"></script>
 </body>
 </html>
