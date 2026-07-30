@@ -1507,7 +1507,7 @@ class UIController {
 
     static async startApp(){
 
-
+alert("دخلنا startApp");
 
         const text =
         this.safeGet(
@@ -1521,7 +1521,7 @@ class UIController {
 
             await AuthService.initialize();
 
-
+alert("Auth نجح");
 
             const welcome =
             this.safeGet(
