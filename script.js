@@ -1079,13 +1079,11 @@ class AuthService {
 
         if(!TgAdapter.isAvailable()){
 
+    console.warn(
+        "Development mode: Running outside Telegram"
+    );
 
-            throw new Error(
-            "افتح التطبيق من Telegram فقط."
-            );
-
-
-        }
+}
 
 
 
