@@ -1535,6 +1535,27 @@ class UIController {
                 welcome.classList.add(
                     "hidden"
                 );
+           
+           const app =
+this.safeGet(
+    "app"
+);
+
+if(app)
+    app.classList.add(
+        "active"
+    );
+
+
+const home =
+this.safeGet(
+    "home-page"
+);
+
+if(home)
+    home.classList.add(
+        "active"
+    );
 
 
 
