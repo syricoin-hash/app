@@ -1,702 +1,2789 @@
-/* =========================================
-   SyriCoin Telegram Mini App - Phase 3 & Final Integrated Logic
-   ========================================= */
+/* ==========================================================================
+   SyriCoin Telegram Mini App
+   Core JavaScript Architecture
+   Production Hardened Version
+   Part 1/4
+   ========================================================================== */
 
-// Mock Application State with LocalStorage
-let appState = {
-    points: 1250,
-    sypValue: '62,500 ليرة سورية',
-    totalEarnings: '3,400 نقطة',
-    todayEarnings: '450 نقطة',
-    lastTask: 'إكمال مهمة - تثبيت تطبيق',
-    lastVideo: 'مشاهدة فيديو رقم #42',
-    lastWithdrawal: 'لا يوجد نشاط حالي',
-    userFullName: '',
-    userPhone: '',
-    userNationalId: '',
-    userQrCode: null,
-    savedWithdrawals: []
-};
 
-let currentMode = 'credit'; // 'credit' (سحب رصيد) or 'cash' (سحب كاش)
-let videoInterval = null; // To handle video timers safely
+/* ==========================================================================
+   1. CENTRAL CONFIGURATION
+   ========================================================================== */
 
-// Load and Save State
-function loadState() {
-    const saved = localStorage.getItem('syricoin_appState');
-    if (saved) {
-        try {
-            appState = { ...appState, ...JSON.parse(saved) };
-        } catch (e) {
-            console.error("Error parsing saved data", e);
-        }
-    }
-}
+const CONFIG = Object.freeze({
 
-function saveState() {
-    localStorage.setItem('syricoin_appState', JSON.stringify(appState));
-}
+    // Google Apps Script Backend URL
+    API_URL: "https://script.google.com/macros/s/YOUR_GAS_DEPLOYMENT_ID/exec",
 
-document.addEventListener('DOMContentLoaded', () => {
-    // 0. Load Data
-    loadState();
+    APP_VERSION: "1.0.0",
 
-    // 1. Initialize Telegram WebApp Integration
-    initTelegramWebApp();
+    REQUEST_TIMEOUT_MS: 15000,
 
-    // 2. Initialize Welcome Screen
-    initWelcomeScreen();
+    MAX_RETRIES: 2,
 
-    // 3. Initialize Navigation System & Edge Swipe Back
-    initNavigation();
+    MIN_WITHDRAWAL_POINTS: 5000,
 
-    // 4. Initialize Interactive Buttons & Data State & Withdrawal Modal
-    initActions();
-    initWithdrawalSystem();
+    MAX_QR_SIZE_MB: 1,
 
-    // 5. Render Initial Dashboard Data
-    updateDashboardData();
+    CAPTCHA_TIMEOUT_MS: 30000,
+
+
+    CAPTCHA_PROVIDER: "INTERNAL",
+    // INTERNAL | TURNSTILE
+
+
+    TURNSTILE_SITEKEY: "",
+
+
+    ENDPOINTS: Object.freeze({
+
+        SYNC_USER: "sync_user",
+
+        CHECK_SECURITY: "check_security",
+
+        GET_CPA_TASKS: "get_cpa_tasks",
+
+        VERIFY_TASK: "verify_task",
+
+        REQUEST_WITHDRAWAL: "request_withdrawal",
+
+        UPLOAD_QR: "upload_qr",
+
+        GENERATE_CAPTCHA: "generate_captcha",
+
+        VERIFY_CAPTCHA: "verify_captcha",
+
+        UPDATE_PROFILE: "update_profile"
+
+    }),
+
+
+    // Operations that must never auto retry
+    NON_RETRYABLE_ACTIONS: Object.freeze([
+
+        "request_withdrawal",
+
+        "verify_task",
+
+        "upload_qr"
+
+    ])
+
 });
 
-/* =========================================
-   Telegram WebApp Integration
-   ========================================= */
-function initTelegramWebApp() {
-    if (window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        
-        const user = tg.initDataUnsafe?.user;
-        if (user) {
-            const usernameDisplay = document.getElementById('username-display');
-            if (usernameDisplay) {
-                usernameDisplay.textContent = user.first_name || user.username || 'مستخدم Telegram';
-            }
+
+
+/* ==========================================================================
+   2. TELEGRAM WEBAPP ADAPTER
+   ========================================================================== */
+
+const TgAdapter = {
+
+
+    tg: window.Telegram?.WebApp || null,
+
+
+    init(){
+
+        if(!this.tg) return;
+
+
+        try{
+
+            this.tg.ready();
+
+            this.tg.expand();
+
+
+        }catch(error){
+
+            console.warn(
+                "[Telegram] Initialization warning",
+                error.message
+            );
+
         }
-    }
-}
 
-/* =========================================
-   Welcome Screen Handling
-   ========================================= */
-function initWelcomeScreen() {
-    const welcomeScreen = document.getElementById('welcome-screen');
-    const startBtn = document.getElementById('start-app-btn');
-    
-    if (startBtn && welcomeScreen) {
-        startBtn.addEventListener('click', () => {
-            welcomeScreen.classList.add('hidden');
-        });
-    }
-}
+    },
 
-/* =========================================
-   Navigation System & Edge Swipe Back & Reverse Animation
-   ========================================= */
-function initNavigation() {
-    // Open internal pages via method cards
-    const methodCards = document.querySelectorAll('.method-card');
-    methodCards.forEach(card => {
-        card.addEventListener('click', () => {
-            const targetId = card.getAttribute('data-target');
-            if (targetId) {
-                openInternalPage(targetId);
-            }
-        });
-    });
 
-    // Settings button opens profile page
-    const settingsBtn = document.getElementById('settings-btn');
-    if (settingsBtn) {
-        settingsBtn.addEventListener('click', () => {
-            openInternalPage('profile-page');
-        });
+
+    isAvailable(){
+
+        return Boolean(
+            this.tg &&
+            this.tg.initData
+        );
+
+    },
+
+
+
+    getUser(){
+
+        return this.tg?.initDataUnsafe?.user || null;
+
+    },
+
+
+
+    getInitData(){
+
+        return this.tg?.initData || "";
+
+    },
+
+
+    getPlatform(){
+
+        return this.tg?.platform || "unknown";
+
     }
 
-    // Wallet & History button opens wallet page
-    const walletHistoryBtn = document.getElementById('wallet-history-btn');
-    if (walletHistoryBtn) {
-        walletHistoryBtn.addEventListener('click', () => {
-            openInternalPage('wallet-page');
-        });
-    }
+};
 
-    // Back buttons return with smooth reverse transition
-    const backButtons = document.querySelectorAll('.back-btn');
-    backButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            closeAllInternalPages();
-        });
-    });
 
-    // Edge Swipe Back (iPhone style simulation)
-    let touchStartX = 0;
-    let activeInternalPage = null;
 
-    document.addEventListener('touchstart', (e) => {
-        touchStartX = e.touches[0].clientX;
-        activeInternalPage = document.querySelector('.internal-page.active');
-    }, {passive: true});
+/* ==========================================================================
+   3. SECURITY ENGINE
+   ========================================================================== */
 
-    document.addEventListener('touchend', (e) => {
-        if (!activeInternalPage) return;
-        const touchEndX = e.changedTouches[0].clientX;
-        // If swiped from left edge (within 40px) to right (> 80px distance)
-        if (touchStartX < 40 && (touchEndX - touchStartX) > 80) {
-            closeAllInternalPages();
+const Security = {
+
+
+    escapeHTML(value){
+
+        if(value === null || value === undefined)
+            return "";
+
+
+        return String(value)
+
+        .replace(/&/g,"&amp;")
+
+        .replace(/</g,"&lt;")
+
+        .replace(/>/g,"&gt;")
+
+        .replace(/"/g,"&quot;")
+
+        .replace(/'/g,"&#039;");
+
+    },
+
+
+
+
+    generateSecureToken(length = 32){
+
+        if(window.crypto?.getRandomValues){
+
+            const bytes =
+            new Uint8Array(length);
+
+
+            window.crypto.getRandomValues(bytes);
+
+
+            return Array.from(bytes)
+
+            .map(
+                b =>
+                b.toString(16)
+                .padStart(2,"0")
+            )
+
+            .join("");
+
         }
-    }, {passive: true});
-}
 
-function openInternalPage(pageId) {
-    const page = document.getElementById(pageId);
-    if (page) {
-        page.classList.add('active');
+
+
+        return (
+            Date.now()
+            .toString(36)
+            +
+            Math.random()
+            .toString(36)
+            .substring(2)
+        );
+
+    },
+
+
+
+
+    generateRequestID(){
+
+        return (
+            "REQ-" +
+            Date.now() +
+            "-" +
+            this.generateSecureToken(8)
+        );
+
+    },
+
+
+
+
+    generateTransactionID(prefix="TX"){
+
+
+        return (
+
+            prefix +
+            "-" +
+            new Date()
+            .toISOString()
+            .replace(/[-:.TZ]/g,"")
+            +
+            "-"
+            +
+            this.generateSecureToken(6)
+
+        );
+
+
     }
-}
 
-function closeAllInternalPages() {
-    const internalPages = document.querySelectorAll('.internal-page');
-    internalPages.forEach(page => {
-        page.classList.remove('active');
-    });
-}
 
-/* =========================================
-   Data Updates & State Management
-   ========================================= */
-function updateDashboardData() {
-    const pointsEl = document.querySelector('.points-value');
-    if (pointsEl) {
-        pointsEl.innerHTML = `${appState.points} <span class="unit">نقطة</span>`;
+
+};
+
+
+
+
+
+/* ==========================================================================
+   4. TRANSACTION MANAGER
+   ========================================================================== */
+
+
+const TransactionManager = {
+
+
+    activeTransactions:new Map(),
+
+
+
+    create(type,payload={}){
+
+
+        const id =
+        Security.generateTransactionID(type);
+
+
+
+        const transaction={
+
+            id,
+
+            type,
+
+            payload,
+
+            createdAt:Date.now(),
+
+            status:"created"
+
+        };
+
+
+
+        this.activeTransactions.set(
+            id,
+            transaction
+        );
+
+
+        return transaction;
+
+
+    },
+
+
+
+    update(id,status){
+
+
+        const tx =
+        this.activeTransactions.get(id);
+
+
+        if(tx){
+
+            tx.status=status;
+
+        }
+
+
+    },
+
+
+
+    remove(id){
+
+        this.activeTransactions.delete(id);
+
     }
 
-    const sypEl = document.querySelector('.syp-value');
-    if (sypEl) {
-        sypEl.textContent = `القيمة: ${appState.sypValue}`;
+
+
+};
+
+
+
+
+
+/* ==========================================================================
+   5. GLOBAL APPLICATION STATE
+   ========================================================================== */
+
+
+const AppState = {
+
+
+    user:{
+
+
+        telegram_id:null,
+
+        username:"",
+
+        full_name:"",
+
+        total_points:0,
+
+        wallet_balance_syp:0,
+
+        reserved_points:0,
+
+        reserved_balance_syp:0,
+
+        phone_number:"",
+
+        notifications_count:0
+
+
+    },
+
+
+
+    session:{
+
+
+        token:
+        Security.generateSecureToken(),
+
+
+        startedAt:Date.now()
+
+
+    },
+
+
+
+    security:{
+
+
+        vpnDetected:false,
+
+
+        captchaToken:null
+
+
+    },
+
+
+
+    withdrawal:{
+
+
+        mode:"credit",
+
+        qrUrl:null,
+
+        processing:false,
+
+        transactionId:null
+
+
+    },
+
+
+
+    tasks:{
+
+
+        completed:new Set(),
+
+        processing:new Set()
+
+
+    },
+
+
+
+
+
+    setUser(data){
+
+
+        if(!data)
+            return;
+
+
+
+        this.user =
+        {
+            ...this.user,
+            ...data
+        };
+
+
+
+        if(Array.isArray(data.completed_tasks)){
+
+
+            this.tasks.completed =
+            new Set(data.completed_tasks);
+
+
+        }
+
+
+        if(window.UIController){
+
+            UIController.updateDashboard();
+
+        }
+
+
+    },
+
+
+
+
+
+    getAvailablePoints(){
+
+
+        return Math.max(
+
+            0,
+
+            Number(this.user.total_points || 0)
+            -
+            Number(this.user.reserved_points || 0)
+
+        );
+
+
     }
 
-    const summaryDivs = document.querySelectorAll('.earnings-summary div');
-    if (summaryDivs.length >= 2) {
-        summaryDivs[0].innerHTML = `إجمالي الأرباح: <span>${appState.totalEarnings}</span>`;
-        summaryDivs[1].innerHTML = `أرباح اليوم: <span>${appState.todayEarnings}</span>`;
-    }
-}
 
-/* =========================================
-   Interactive Buttons & Features (Videos & Withdrawal)
-   ========================================= */
-function initActions() {
-    // Populate internal pages content dynamically
-    populateInternalPagesContent();
-}
 
-/* =========================================
-   Vertical Video Stream + Automatic / Manual Navigation
-   ========================================= */
-function openVideoStreamModal() {
-    let videoModal = document.getElementById('video-stream-modal');
-    if (!videoModal) return;
 
-    videoModal.style.display = 'flex';
-    const scrollContainer = document.getElementById('video-stream-scroll-container');
-    
-    // Mock vertical video feed items
-    scrollContainer.innerHTML = `
-        <div class="video-slide" data-index="1">
-            <div style="position:absolute; inset:0; background:linear-gradient(135deg, #111, #222); display:flex; align-items:center; justify-content:center; color:#fff; font-size:24px; font-weight:700;">فيديو ترويجي رقم 1</div>
-            <div class="video-overlay-info">
-                <div class="video-progress-bar-container"><div class="video-progress-bar-fill" id="vid-progress-1"></div></div>
-                <h4 style="font-size:16px;">فيديو مكافأة SyriCoin #1</h4>
-                <p style="font-size:13px; color:var(--neon-green);">شاهد للنهاية أو اسحب للأعلى للفيديو التالي (+40 نقطة)</p>
-            </div>
-        </div>
-        <div class="video-slide" data-index="2">
-            <div style="position:absolute; inset:0; background:linear-gradient(135deg, #1a1a2e, #16213e); display:flex; align-items:center; justify-content:center; color:#fff; font-size:24px; font-weight:700;">فيديو ترويجي رقم 2</div>
-            <div class="video-overlay-info">
-                <div class="video-progress-bar-container"><div class="video-progress-bar-fill" id="vid-progress-2"></div></div>
-                <h4 style="font-size:16px;">فيديو مكافأة SyriCoin #2</h4>
-                <p style="font-size:13px; color:var(--neon-green);">شاهد للنهاية أو اسحب للأعلى للفيديو التالي (+50 نقطة)</p>
-            </div>
-        </div>
-    `;
+};
 
-    // Close button
-    document.getElementById('close-video-stream').onclick = () => {
-        if (videoInterval) clearInterval(videoInterval);
-        videoModal.style.display = 'none';
-    };
+/* ==========================================================================
+   SyriCoin Telegram Mini App
+   Production Hardened Version
+   Part 2/4
+   ========================================================================== */
 
-    // Simulate automatic progress and auto-scroll upon 100% completion
-    let currentSlideIndex = 0;
-    const slides = scrollContainer.querySelectorAll('.video-slide');
-    
-    function simulateProgressForSlide(index) {
-        let progressFill = document.getElementById(`vid-progress-${index + 1}`);
-        if (!progressFill) return;
-        
-        let progress = 0;
-        if (videoInterval) clearInterval(videoInterval);
-        videoInterval = setInterval(() => {
-            progress += 2; // reaches 100% in 5 seconds
-            progressFill.style.width = progress + '%';
-            if (progress >= 100) {
-                clearInterval(videoInterval);
-                appState.points += 45;
-                saveState();
-                updateDashboardData();
-                showToast('أتممت مشاهدة الفيديو بنجاح! تمت إضافة النقاط والانتقال التلقائي.');
-                
-                // Auto scroll to next video
-                if (index + 1 < slides.length) {
-                    slides[index + 1].scrollIntoView({ behavior: 'smooth' });
-                    simulateProgressForSlide(index + 1);
-                } else {
-                    videoModal.style.display = 'none';
+
+/* ==========================================================================
+   6. API CLIENT ENGINE
+   ========================================================================== */
+
+
+class ApiClient {
+
+
+    static async post(
+        action,
+        payload = {},
+        retries = CONFIG.MAX_RETRIES
+    ){
+
+
+        // منع العمليات عند اكتشاف VPN
+        if(
+            AppState.security.vpnDetected &&
+            action !== CONFIG.ENDPOINTS.CHECK_SECURITY
+        ){
+
+            throw new Error(
+                "تم إيقاف العمليات مؤقتاً بسبب نظام الحماية."
+            );
+
+        }
+
+
+
+        // العمليات المالية لا تعاد تلقائياً
+        if(
+            CONFIG.NON_RETRYABLE_ACTIONS
+            .includes(action)
+        ){
+
+            retries = 0;
+
+        }
+
+
+
+
+        const controller =
+        new AbortController();
+
+
+        const timeout =
+        setTimeout(
+            ()=>controller.abort(),
+            CONFIG.REQUEST_TIMEOUT_MS
+        );
+
+
+
+
+        const requestID =
+        Security.generateRequestID();
+
+
+
+
+        const authData = {
+
+
+            init_data:
+            TgAdapter.getInitData(),
+
+
+            telegram_id:
+            TgAdapter.getUser()?.id ||
+            AppState.user.telegram_id,
+
+
+            session_token:
+            AppState.session.token,
+
+
+
+            request_id:
+            requestID,
+
+
+
+            app_version:
+            CONFIG.APP_VERSION,
+
+
+
+            platform:
+            TgAdapter.getPlatform(),
+
+
+
+            captcha_token:
+            AppState.security.captchaToken || null
+
+
+        };
+
+
+
+
+
+        try{
+
+
+            const response =
+            await fetch(
+
+                CONFIG.API_URL,
+
+                {
+
+                    method:"POST",
+
+                    headers:{
+
+                        "Content-Type":
+                        "text/plain;charset=utf-8"
+
+                    },
+
+
+                    body:
+                    JSON.stringify({
+
+                        action,
+
+                        authData,
+
+                        payload
+
+                    }),
+
+
+                    signal:
+                    controller.signal
+
                 }
+
+            );
+
+
+
+            clearTimeout(timeout);
+
+
+
+
+            if(!response.ok){
+
+
+                const error =
+                new Error(
+                    `Server Error ${response.status}`
+                );
+
+
+                error.http=true;
+
+
+                throw error;
+
             }
-        }, 100);
+
+
+
+
+
+            const result =
+            await response.json();
+
+
+
+
+            if(result.status==="error"){
+
+
+                const error =
+                new Error(
+                    result.message ||
+                    "حدث خطأ بالخادم"
+                );
+
+
+                error.http=true;
+
+
+                throw error;
+
+
+            }
+
+
+
+
+
+            // استهلاك الكابتشا بعد العملية
+            AppState.security.captchaToken=null;
+
+
+
+            return result.data;
+
+
+
+
+        }catch(error){
+
+
+
+            clearTimeout(timeout);
+
+
+
+
+            const retryAllowed =
+
+            (
+                error.name==="AbortError" ||
+                error.name==="TypeError"
+            )
+            &&
+            !error.http;
+
+
+
+
+            if(
+                retries>0 &&
+                retryAllowed
+            ){
+
+
+
+                await new Promise(
+                    r=>setTimeout(r,1000)
+                );
+
+
+
+                return this.post(
+                    action,
+                    payload,
+                    retries-1
+                );
+
+
+            }
+
+
+
+
+
+            if(error.name==="AbortError"){
+
+
+                throw new Error(
+                    "انتهى وقت الاتصال بالخادم."
+                );
+
+
+            }
+
+
+
+
+            throw error;
+
+
+        }
+
+
     }
 
-    simulateProgressForSlide(0);
+
+
 }
 
-/* =========================================
-   Unified Withdrawal Tabs UI logic
-   ========================================= */
-function updateWithdrawalTabsUI(mode) {
-    currentMode = mode;
-    const tabsContainer = document.getElementById('withdrawal-tabs-container');
-    const qrSectionContainer = document.getElementById('qr-section-container');
-    
-    if (!tabsContainer || !qrSectionContainer) return;
 
-    if (mode === 'credit') {
-        qrSectionContainer.style.display = 'none';
-        tabsContainer.innerHTML = `
-            <button class="tab-btn active" data-tab="mtn">MTN رصيد</button>
-            <button class="tab-btn" data-tab="syriatel">سيرياتيل رصيد</button>
-        `;
-    } else {
-        qrSectionContainer.style.display = 'flex';
-        tabsContainer.innerHTML = `
-            <button class="tab-btn active" data-tab="sham">شام كاش</button>
-            <button class="tab-btn" data-tab="syriatel-cash">سيرياتيل كاش</button>
-        `;
+
+
+
+/* ==========================================================================
+   7. CAPTCHA SECURITY SERVICE
+   ========================================================================== */
+
+
+class CaptchaService {
+
+
+
+    static async requireVerification(){
+
+
+        if(
+            CONFIG.CAPTCHA_PROVIDER==="TURNSTILE"
+        ){
+
+            return this.turnstile();
+
+
+        }
+
+
+        return this.internal();
+
+
     }
 
-    tabsContainer.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            tabsContainer.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
-    });
-}
 
-/* =========================================
-   Advanced Withdrawal System & QR Code Processing
-   ========================================= */
-function initWithdrawalSystem() {
-    const requestWithdrawalBtn = document.getElementById('request-withdrawal-btn');
-    const withdrawalModal = document.getElementById('withdrawal-modal');
-    const closeModalBtn = document.getElementById('close-modal-btn');
-    const uploadQrBtn = document.getElementById('upload-qr-btn');
-    const qrFileInput = document.getElementById('qr-file-input');
-    const qrStatusText = document.getElementById('qr-status-text');
-    const smartConfirmBtn = document.getElementById('smart-confirm-withdrawal-btn');
 
-    if (requestWithdrawalBtn && withdrawalModal) {
-        requestWithdrawalBtn.addEventListener('click', () => {
-            withdrawalModal.classList.add('active');
-            updateWithdrawalTabsUI('credit');
-            loadAutoSavedBillingInfo();
-        });
-    }
 
-    if (closeModalBtn && withdrawalModal) {
-        closeModalBtn.addEventListener('click', () => {
-            withdrawalModal.classList.remove('active');
-        });
-    }
 
-    // QR Image Picker & jsQR Decoder integration
-    if (uploadQrBtn && qrFileInput) {
-        uploadQrBtn.addEventListener('click', () => {
-            qrFileInput.click();
-        });
 
-        qrFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+    static async internal(){
 
-            qrStatusText.textContent = 'جاري قراءة كود الـ QR...';
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const canvasCtx = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    canvasCtx.drawImage(img, 0, 0);
-                    const imageData = canvasCtx.getImageData(0, 0, canvas.width, canvas.height);
-                    
-                    if (window.jsQR) {
-                        const code = jsQR(imageData.data, imageData.width, imageData.height);
-                        if (code) {
-                            appState.userQrCode = code.data;
-                            qrStatusText.textContent = 'تمت قراءة الكود بنجاح: ' + code.data;
-                            qrStatusText.style.color = 'var(--neon-green)';
-                        } else {
-                            qrStatusText.textContent = 'تعذر قراءة الكود، حاول رفع صورة أوضح.';
-                            qrStatusText.style.color = 'var(--error-red)';
+
+
+        try{
+
+
+            const challenge =
+            await ApiClient.post(
+                CONFIG.ENDPOINTS.GENERATE_CAPTCHA
+            );
+
+
+
+
+            return new Promise(
+            (resolve,reject)=>{
+
+
+
+                const timer =
+                setTimeout(()=>{
+
+
+                    UIController.closeCaptchaModal();
+
+
+                    reject(
+                        new Error(
+                        "انتهى وقت التحقق."
+                        )
+                    );
+
+
+                },
+                CONFIG.CAPTCHA_TIMEOUT_MS);
+
+
+
+                UIController.showCaptchaModal(
+
+                    challenge,
+
+                    async(answer)=>{
+
+
+
+                        clearTimeout(timer);
+
+
+
+                        if(answer===null){
+
+
+                            reject(
+                                new Error(
+                                "تم إلغاء التحقق."
+                                )
+                            );
+
+
+                            return;
+
                         }
-                    } else {
-                        appState.userQrCode = 'Uploaded_QR_Mock_ID';
-                        qrStatusText.textContent = 'تم رفع كود الـ QR بنجاح.';
-                        qrStatusText.style.color = 'var(--neon-green)';
+
+
+
+
+                        try{
+
+
+                            const result =
+                            await ApiClient.post(
+
+                                CONFIG.ENDPOINTS.VERIFY_CAPTCHA,
+
+                                {
+
+                                    challenge_id:
+                                    challenge.id,
+
+
+                                    answer
+
+                                }
+
+                            );
+
+
+
+                            AppState.security.captchaToken =
+                            result.captcha_token;
+
+
+
+                            resolve(true);
+
+
+
+                        }catch(e){
+
+
+                            reject(
+                                new Error(
+                                "فشل التحقق."
+                                )
+                            );
+
+
+                        }
+
+
+
                     }
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
+
+
+                );
+
+
+
+
+            });
+
+
+
+        }catch(e){
+
+
+            throw new Error(
+                "تعذر إنشاء اختبار التحقق."
+            );
+
+
+        }
+
+
+
+    }
+
+
+
+
+
+
+    static async turnstile(){
+
+
+
+        return new Promise(
+        (resolve,reject)=>{
+
+
+            if(!window.turnstile){
+
+
+                return this.internal()
+                .then(resolve)
+                .catch(reject);
+
+
+            }
+
+
+
+
+
+            const timer =
+            setTimeout(()=>{
+
+
+                reject(
+                    new Error(
+                    "انتهى وقت Turnstile"
+                    )
+                );
+
+
+            },
+            CONFIG.CAPTCHA_TIMEOUT_MS);
+
+
+
+
+
+
+            window.turnstile.render(
+
+                "#turnstile-container",
+
+                {
+
+
+                    sitekey:
+                    CONFIG.TURNSTILE_SITEKEY,
+
+
+
+                    callback(token){
+
+
+                        clearTimeout(timer);
+
+
+
+                        AppState.security.captchaToken =
+                        token;
+
+
+
+                        resolve(true);
+
+
+                    },
+
+
+                    "error-callback"(){
+
+                        clearTimeout(timer);
+
+
+                        reject(
+                            new Error(
+                            "فشل الحماية"
+                            )
+                        );
+
+                    }
+
+
+                }
+
+
+            );
+
+
+
         });
+
+
+
     }
 
-    // Front-End Validation & Smart Confirm Button State
-    const fullnameInput = document.getElementById('withdrawal-fullname');
-    const phoneInput = document.getElementById('withdrawal-phone');
-    const nationalIdInput = document.getElementById('withdrawal-national-id');
-    const amountInput = document.getElementById('withdrawal-amount');
 
-    function validateInputs() {
-        const fullname = fullnameInput.value.trim();
-        const phone = phoneInput.value.trim();
-        const natId = nationalIdInput.value.trim();
-        const amount = amountInput.value.trim();
 
-        let isValid = true;
-        if (!fullname || phone.length !== 8 || natId.length !== 11 || !amount) {
-            isValid = false;
-        }
-        if (currentMode === 'cash' && !appState.userQrCode) {
-            isValid = false;
+}
+
+
+
+
+
+/* ==========================================================================
+   8. AUTHENTICATION SERVICE
+   ========================================================================== */
+
+
+class AuthService {
+
+
+
+    static async initialize(){
+
+
+
+        TgAdapter.init();
+
+
+
+
+        if(!TgAdapter.isAvailable()){
+
+
+            throw new Error(
+            "افتح التطبيق من Telegram فقط."
+            );
+
+
         }
 
-        if (isValid) {
-            smartConfirmBtn.classList.remove('error-state');
-            smartConfirmBtn.textContent = 'تأكيد التحويل';
-        } else {
-            smartConfirmBtn.classList.add('error-state');
-            smartConfirmBtn.textContent = 'يرجى إكمال البيانات المطلوبة بدقة';
+
+
+
+
+        await SecurityGuard.check();
+
+
+
+
+
+        const user =
+        TgAdapter.getUser();
+
+
+
+
+        if(!user){
+
+
+            throw new Error(
+            "تعذر الحصول على بيانات Telegram."
+            );
+
+
         }
-        return isValid;
+
+
+
+
+
+        const data =
+        await ApiClient.post(
+
+            CONFIG.ENDPOINTS.SYNC_USER,
+
+            {
+
+
+                telegram_id:user.id,
+
+
+                username:
+                user.username || "",
+
+
+                first_name:
+                user.first_name || "",
+
+
+                last_name:
+                user.last_name || "",
+
+
+                language:
+                user.language_code || "ar"
+
+
+            }
+
+        );
+
+
+
+
+        AppState.setUser(data);
+
+
+
     }
 
-    [fullnameInput, phoneInput, nationalIdInput, amountInput].forEach(input => {
-        if (input) {
-            input.addEventListener('input', validateInputs);
+
+
+}
+
+
+
+
+
+/* ==========================================================================
+   9. SECURITY GUARD
+   ========================================================================== */
+
+
+class SecurityGuard {
+
+
+
+    static async check(){
+
+
+        try{
+
+
+            const result =
+            await ApiClient.post(
+
+                CONFIG.ENDPOINTS.CHECK_SECURITY,
+
+                {
+
+                    timezone:
+                    new Date()
+                    .getTimezoneOffset(),
+
+
+                    agent:
+                    navigator.userAgent
+
+                }
+
+            );
+
+
+
+
+            AppState.security.vpnDetected =
+            Boolean(result.is_vpn);
+
+
+
+            if(window.UIController){
+
+
+                UIController.toggleVpnOverlay(
+                    AppState.security.vpnDetected
+                );
+
+
+            }
+
+
+
+
+        }catch(e){
+
+
+
+            console.warn(
+                "[SecurityGuard]",
+                e.message
+            );
+
+
         }
+
+
+
+    }
+
+
+
+}
+
+
+
+
+
+/* ==========================================================================
+   10. UPLOAD SERVICE
+   ========================================================================== */
+
+
+class UploadService {
+
+
+
+    static async uploadQR(file){
+
+
+
+        const compressed =
+        await ImageUtils.compressImage(file);
+
+
+
+
+        const base64 =
+        await ImageUtils.blobToBase64(
+            compressed.blob
+        );
+
+
+
+
+        const transaction =
+        TransactionManager.create(
+            "UPLOAD_QR"
+        );
+
+
+
+
+        const result =
+        await ApiClient.post(
+
+            CONFIG.ENDPOINTS.UPLOAD_QR,
+
+            {
+
+
+                upload_id:
+                transaction.id,
+
+
+                mime_type:
+                compressed.mimeType,
+
+
+                base64_data:
+                base64
+
+
+            }
+
+        );
+
+
+
+
+        TransactionManager.remove(
+            transaction.id
+        );
+
+
+
+
+        if(
+            !result ||
+            !result.qr_code_url
+        ){
+
+
+            throw new Error(
+            "فشل رفع الصورة."
+            );
+
+
+        }
+
+
+
+
+        return result.qr_code_url;
+
+
+
+    }
+
+
+
+}
+
+/* ==========================================================================
+   SyriCoin Telegram Mini App
+   Production Hardened Version
+   Part 3/4
+   ========================================================================== */
+
+
+/* ==========================================================================
+   11. UI CONTROLLER
+   ========================================================================== */
+
+
+class UIController {
+
+
+
+    static safeGet(id){
+
+        return document.getElementById(id);
+
+    }
+
+
+
+
+    static safeAddListener(id,event,callback){
+
+        const element =
+        this.safeGet(id);
+
+
+        if(element){
+
+            element.addEventListener(
+                event,
+                callback
+            );
+
+        }
+
+    }
+
+
+
+
+
+    static init(){
+
+        this.bindEvents();
+
+
+        if(
+            TgAdapter.tg?.themeParams?.bg_color
+        ){
+
+            document.documentElement
+            .style
+            .setProperty(
+
+                "--tg-theme-bg-color",
+
+                TgAdapter.tg.themeParams.bg_color
+
+            );
+
+        }
+
+
+    }
+
+
+
+
+
+/* ==========================================================================
+   EVENTS
+   ========================================================================== */
+
+
+    static bindEvents(){
+
+
+
+        this.safeAddListener(
+            "start-app-btn",
+            "click",
+            ()=>this.startApp()
+        );
+
+
+
+        this.safeAddListener(
+            "request-withdrawal-btn",
+            "click",
+            ()=>this.openWithdrawalModal()
+        );
+
+
+
+        this.safeAddListener(
+            "smart-confirm-withdrawal-btn",
+            "click",
+            ()=>this.handleWithdrawalSubmit()
+        );
+
+
+
+        this.safeAddListener(
+            "upload-qr-btn",
+            "click",
+            ()=>{
+
+                const input =
+                this.safeGet(
+                    "qr-file-input"
+                );
+
+                if(input)
+                    input.click();
+
+            }
+
+        );
+
+
+
+        this.safeAddListener(
+            "qr-file-input",
+            "change",
+            e=>this.handleQRFileSelection(e)
+        );
+
+
+
+        this.safeAddListener(
+            "settings-btn",
+            "click",
+            ()=>this.openPage(
+                "profile-page"
+            )
+        );
+
+
+
+        document
+        .querySelectorAll(".back-btn")
+        .forEach(btn=>{
+
+            btn.addEventListener(
+                "click",
+                ()=>this.closeAllPages()
+            );
+
+        });
+
+
+
+    }
+
+
+
+
+
+/* ==========================================================================
+   APP START
+   ========================================================================== */
+
+
+    static async startApp(){
+
+
+
+        const text =
+        this.safeGet(
+            "splash-loading-text"
+        );
+
+
+
+        try{
+
+
+            await AuthService.initialize();
+
+
+
+            const welcome =
+            this.safeGet(
+                "welcome-screen"
+            );
+
+
+            if(welcome)
+                welcome.classList.add(
+                    "hidden"
+                );
+
+
+
+            const splash =
+            this.safeGet(
+                "splash-screen"
+            );
+
+
+            if(splash){
+
+                splash.style.opacity="0";
+
+
+                setTimeout(
+                    ()=>splash.style.display="none",
+                    500
+                );
+
+            }
+
+
+
+
+        }catch(error){
+
+
+
+            if(text){
+
+                text.textContent =
+                error.message;
+
+
+            }
+
+
+
+        }
+
+
+
+    }
+
+
+
+
+
+/* ==========================================================================
+   DASHBOARD
+   ========================================================================== */
+
+
+    static updateDashboard(){
+
+
+        const user =
+        AppState.user;
+
+
+
+        const points =
+        this.safeGet(
+            "main-points-display"
+        );
+
+
+
+        const money =
+        this.safeGet(
+            "main-syp-display"
+        );
+
+
+
+        if(points){
+
+            points.innerHTML =
+
+            `${Security.escapeHTML(
+                user.total_points
+            )}
+            <span class="unit">
+            نقطة
+            </span>`;
+
+        }
+
+
+
+
+        if(money){
+
+
+            money.textContent =
+
+            `القيمة:
+            ${Security.escapeHTML(
+                user.wallet_balance_syp
+            )}
+            ليرة سورية`;
+
+        }
+
+
+
+    }
+
+
+
+
+
+
+/* ==========================================================================
+   PAGE SYSTEM
+   ========================================================================== */
+
+
+    static openPage(pageId){
+
+
+        const page =
+        this.safeGet(pageId);
+
+
+        if(!page)
+            return;
+
+
+
+        page.classList.add(
+            "active"
+        );
+
+
+
+        if(pageId==="profile-page")
+            this.renderProfile();
+
+
+
+        if(pageId==="cpa-page")
+            this.renderCPA();
+
+
+
+    }
+
+
+
+
+
+    static closeAllPages(){
+
+
+        document
+        .querySelectorAll(".internal-page")
+        .forEach(
+            page=>
+            page.classList.remove(
+                "active"
+            )
+        );
+
+
+    }
+
+
+
+
+
+/* ==========================================================================
+   PROFILE
+   ========================================================================== */
+
+
+static renderProfile(){
+
+
+const container =
+this.safeGet(
+"profile-content"
+);
+
+
+
+if(!container)
+return;
+
+
+
+const user =
+AppState.user;
+
+
+
+container.innerHTML = `
+
+
+<div class="profile-header-container">
+
+
+<h3>
+${Security.escapeHTML(
+user.full_name ||
+user.username
+)}
+
+</h3>
+
+
+<div>
+Telegram ID:
+${Security.escapeHTML(
+user.telegram_id
+)}
+
+</div>
+
+
+</div>
+
+
+
+<div class="input-group">
+
+<label>
+الاسم الكامل
+</label>
+
+
+<input
+id="prof-fullname"
+value="${Security.escapeHTML(
+user.full_name || ""
+)}">
+
+
+</div>
+
+
+
+
+<div class="input-group">
+
+<label>
+رقم الهاتف
+</label>
+
+
+<input
+id="prof-phone"
+value="${Security.escapeHTML(
+user.phone_number || ""
+)}">
+
+
+</div>
+
+
+
+
+<button
+id="save-profile-btn"
+class="action-btn">
+
+حفظ
+
+</button>
+
+
+`;
+
+
+
+
+
+this.safeAddListener(
+
+"save-profile-btn",
+
+"click",
+
+async()=>{
+
+
+try{
+
+
+const updated =
+await ApiClient.post(
+
+CONFIG.ENDPOINTS.UPDATE_PROFILE,
+
+{
+
+
+full_name:
+this.safeGet(
+"prof-fullname"
+).value,
+
+
+phone_number:
+this.safeGet(
+"prof-phone"
+).value
+
+
+}
+
+);
+
+
+
+AppState.setUser(
+updated
+);
+
+
+
+this.showToast(
+"تم تحديث البيانات"
+);
+
+
+
+}catch(e){
+
+
+this.showToast(
+e.message
+);
+
+
+}
+
+
+}
+
+
+);
+
+
+
+}
+
+
+
+
+
+
+
+/* ==========================================================================
+   CPA TASK SYSTEM
+   ========================================================================== */
+
+
+static async renderCPA(){
+
+
+const container =
+this.safeGet(
+"cpa-content"
+);
+
+
+
+if(!container)
+return;
+
+
+
+container.innerHTML =
+"جاري تحميل المهام...";
+
+
+
+try{
+
+
+const tasks =
+await ApiClient.post(
+CONFIG.ENDPOINTS.GET_CPA_TASKS
+);
+
+
+
+container.innerHTML =
+
+tasks.map(task=>{
+
+
+const done =
+AppState.tasks.completed
+.has(
+task.task_id
+);
+
+
+
+return `
+
+
+<div class="task-card">
+
+
+<h4>
+
+${Security.escapeHTML(
+task.title
+)}
+
+</h4>
+
+
+
+<p>
+
+${Security.escapeHTML(
+task.description
+)}
+
+</p>
+
+
+
+<strong>
+
++${Security.escapeHTML(
+task.reward_points
+)}
+نقطة
+
+</strong>
+
+
+
+
+<button
+
+${done ? "disabled":""}
+
+onclick="UIController.handleTaskAction('${Security.escapeHTML(task.task_id)}')"
+
+>
+
+${done ?
+"مكتملة ✓":
+"تنفيذ"}
+
+</button>
+
+
+
+</div>
+
+
+`;
+
+
+}).join("");
+
+
+
+
+}catch(e){
+
+
+container.innerHTML =
+"لا توجد مهام حالياً";
+
+
+}
+
+
+}
+
+
+
+
+
+static async handleTaskAction(taskId){
+
+
+
+if(
+AppState.tasks.processing.has(taskId)
+||
+AppState.tasks.completed.has(taskId)
+)
+return;
+
+
+
+try{
+
+
+AppState.tasks.processing.add(taskId);
+
+
+
+await CaptchaService.requireVerification();
+
+
+
+const result =
+await ApiClient.post(
+
+CONFIG.ENDPOINTS.VERIFY_TASK,
+
+{
+
+task_id:taskId
+
+}
+
+);
+
+
+
+AppState.tasks.completed.add(
+taskId
+);
+
+
+
+AppState.setUser(
+result.updated_user
+);
+
+
+
+this.showToast(
+"تمت إضافة المكافأة"
+);
+
+
+
+}catch(e){
+
+
+this.showToast(
+e.message
+);
+
+
+
+}finally{
+
+
+AppState.tasks.processing.delete(
+taskId
+);
+
+
+
+}
+
+
+
+}
+
+/* ==========================================================================
+   SyriCoin Telegram Mini App
+   Production Hardened Version
+   Part 4/4
+   ========================================================================== */
+
+
+/* ==========================================================================
+   WITHDRAWAL SYSTEM
+   ========================================================================== */
+
+
+UIController.openWithdrawalModal = function(){
+
+
+    const modal =
+    this.safeGet(
+        "withdrawal-modal"
+    );
+
+
+    if(modal)
+        modal.classList.add("active");
+
+
+
+    AppState.withdrawal.mode =
+    "credit";
+
+};
+
+
+
+
+
+UIController.autoFillWithdrawal = function(){
+
+
+    const name =
+    this.safeGet(
+        "withdrawal-fullname"
+    );
+
+
+    const phone =
+    this.safeGet(
+        "withdrawal-phone"
+    );
+
+
+
+    if(name)
+        name.value =
+        AppState.user.full_name || "";
+
+
+
+    if(phone)
+        phone.value =
+        (
+            AppState.user.phone_number || ""
+        )
+        .replace(/^09/,"");
+
+
+};
+
+
+
+
+
+
+
+UIController.handleWithdrawalSubmit = async function(){
+
+
+
+    // منع الضغط المتكرر
+
+    if(
+        AppState.withdrawal.processing
+    )
+    return;
+
+
+
+    const fullName =
+    this.safeGet(
+        "withdrawal-fullname"
+    )?.value.trim();
+
+
+
+    const phone =
+    this.safeGet(
+        "withdrawal-phone"
+    )?.value.trim();
+
+
+
+    const amount =
+    Number(
+        this.safeGet(
+            "withdrawal-amount"
+        )?.value
+    );
+
+
+
+
+
+    if(
+        !fullName ||
+        !phone ||
+        !amount
+    ){
+
+        return this.showToast(
+            "يرجى تعبئة جميع الحقول."
+        );
+
+    }
+
+
+
+
+
+    if(
+        !Number.isInteger(amount)
+        ||
+        amount <= 0
+    ){
+
+        return this.showToast(
+            "أدخل عدد نقاط صحيح."
+        );
+
+    }
+
+
+
+
+
+    if(
+        amount <
+        CONFIG.MIN_WITHDRAWAL_POINTS
+    ){
+
+        return this.showToast(
+            `الحد الأدنى ${CONFIG.MIN_WITHDRAWAL_POINTS} نقطة`
+        );
+
+    }
+
+
+
+
+
+    if(
+        amount >
+        AppState.getAvailablePoints()
+    ){
+
+        return this.showToast(
+            "الرصيد غير كافٍ."
+        );
+
+    }
+
+
+
+
+
+
+    const transaction =
+    TransactionManager.create(
+        "WITHDRAWAL",
+        {
+            amount
+        }
+    );
+
+
+
+    AppState.withdrawal.transactionId =
+    transaction.id;
+
+
+
+
+    try{
+
+
+        AppState.withdrawal.processing =
+        true;
+
+
+
+        await CaptchaService.requireVerification();
+
+
+
+
+
+        const result =
+        await ApiClient.post(
+
+            CONFIG.ENDPOINTS.REQUEST_WITHDRAWAL,
+
+            {
+
+
+                withdrawal_id:
+                transaction.id,
+
+
+                withdrawal_type:
+                AppState.withdrawal.mode,
+
+
+                full_name:
+                fullName,
+
+
+                phone_number:
+                "09"+phone,
+
+
+                points_amount:
+                amount,
+
+
+                qr_code_url:
+                AppState.withdrawal.qrUrl || null
+
+
+            }
+
+        );
+
+
+
+
+
+        AppState.setUser(
+            result.updated_user
+        );
+
+
+
+        TransactionManager.update(
+            transaction.id,
+            "completed"
+        );
+
+
+
+        this.showToast(
+            "تم تسجيل طلب السحب بنجاح."
+        );
+
+
+
+
+        const modal =
+        this.safeGet(
+            "withdrawal-modal"
+        );
+
+
+        if(modal)
+            modal.classList.remove(
+                "active"
+            );
+
+
+
+
+
+    }catch(error){
+
+
+
+        TransactionManager.update(
+            transaction.id,
+            "failed"
+        );
+
+
+
+        this.showToast(
+            error.message
+        );
+
+
+
+    }
+    finally{
+
+
+        AppState.withdrawal.processing =
+        false;
+
+
+    }
+
+
+
+};
+
+
+
+
+
+
+
+/* ==========================================================================
+   QR UPLOAD
+   ========================================================================== */
+
+
+UIController.handleQRFileSelection =
+async function(event){
+
+
+
+    const file =
+    event.target.files[0];
+
+
+
+    if(!file)
+        return;
+
+
+
+
+    try{
+
+
+        this.showToast(
+            "جاري رفع الصورة..."
+        );
+
+
+
+        const url =
+        await UploadService.uploadQR(
+            file
+        );
+
+
+
+        AppState.withdrawal.qrUrl =
+        url;
+
+
+
+        this.showToast(
+            "تم رفع QR بنجاح ✓"
+        );
+
+
+
+    }catch(error){
+
+
+        this.showToast(
+            error.message
+        );
+
+
+    }
+
+
+
+    event.target.value="";
+
+
+};
+
+
+
+
+
+
+
+/* ==========================================================================
+   CAPTCHA MODAL
+   ========================================================================== */
+
+
+UIController.showCaptchaModal =
+function(
+challenge,
+callback
+){
+
+
+
+    const modal =
+    this.safeGet(
+        "captcha-modal"
+    );
+
+
+
+    const box =
+    this.safeGet(
+        "captcha-container"
+    );
+
+
+
+    if(
+        !modal ||
+        !box
+    )
+    return;
+
+
+
+
+    box.innerHTML = `
+
+
+<p>
+
+${Security.escapeHTML(
+challenge.question
+)}
+
+</p>
+
+
+
+${challenge.options.map(
+option=>`
+
+<button
+class="captcha-btn"
+data-answer="${Security.escapeHTML(option)}">
+
+${Security.escapeHTML(option)}
+
+</button>
+
+`
+).join("")}
+
+
+
+<button
+class="captcha-btn cancel-btn">
+
+إلغاء
+
+</button>
+
+
+
+`;
+
+
+
+
+
+    modal.classList.add(
+        "active"
+    );
+
+
+
+
+
+    box
+    .querySelectorAll(
+        ".captcha-btn"
+    )
+    .forEach(btn=>{
+
+
+        btn.onclick=function(){
+
+
+
+            modal.classList.remove(
+                "active"
+            );
+
+
+
+            if(
+                btn.classList.contains(
+                    "cancel-btn"
+                )
+            ){
+
+                callback(null);
+
+            }
+            else{
+
+
+                callback(
+                    btn.dataset.answer
+                );
+
+
+            }
+
+
+        };
+
+
+
     });
 
-    if (smartConfirmBtn) {
-        smartConfirmBtn.addEventListener('click', () => {
-            if (validateInputs()) {
-                // Save persistently for Profile Auto-Saved Billing Info
-                appState.userFullName = fullnameInput.value.trim();
-                appState.userPhone = '09' + phoneInput.value.trim();
-                appState.userNationalId = nationalIdInput.value.trim();
 
-                appState.lastWithdrawal = `طلب سحب بقيمة ${amountInput.value} نقطة (قيد المعالجة)`;
-                appState.savedWithdrawals.unshift({
-                    type: currentMode === 'credit' ? 'سحب رصيد' : 'سحب كاش',
-                    amount: amountInput.value,
-                    date: 'اليوم'
-                });
-                
-                saveState();
-                updateDashboardData();
-                withdrawalModal.classList.remove('active');
-                showToast('تم تقديم طلب السحب بنجاح وحفظ بياناتك تلقائياً.');
-            } else {
-                showToast('خطأ: تأكد من إكمال كافة الحقول بالشروط المحددة.');
-            }
-        });
-    }
-}
+};
 
-function loadAutoSavedBillingInfo() {
-    const fullnameInput = document.getElementById('withdrawal-fullname');
-    const phoneInput = document.getElementById('withdrawal-phone');
-    const nationalIdInput = document.getElementById('withdrawal-national-id');
 
-    if (fullnameInput && appState.userFullName) fullnameInput.value = appState.userFullName;
-    if (phoneInput && appState.userPhone) phoneInput.value = appState.userPhone.replace(/^09/, '');
-    if (nationalIdInput && appState.userNationalId) nationalIdInput.value = appState.userNationalId;
-}
 
-/* =========================================
-   Internal Pages Dynamic Content Population (Profile & Wallet)
-   ========================================= */
-function populateInternalPagesContent() {
-    // Videos page content (integrated with Video Stream Modal trigger)
-    const videosContent = document.querySelector('#videos-page .internal-content');
-    if (videosContent && videosContent.children.length === 0) {
-        videosContent.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:16px;">
-                <div style="background:var(--glass-bg); border:1px solid var(--glass-border); padding:20px; border-radius:var(--radius-md); text-align:center;">
-                    <h3 style="font-size:16px; font-weight:700; margin-bottom:8px;">خلاصة فيديوهات SyriCoin</h3>
-                    <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">تصفح الفيديوهات بالتمرير اليدوي أو اتركها تنتقل تلقائياً عند الاكتمال.</p>
-                    <button id="launch-video-stream-btn" style="background:var(--neon-green); color:#000; font-weight:700; width:100%; padding:14px; border-radius:var(--radius-sm); box-shadow:var(--neon-glow);">بدء المشاهدة وكسب النقاط</button>
-                </div>
-            </div>
-        `;
-        document.getElementById('launch-video-stream-btn').addEventListener('click', () => {
-            openVideoStreamModal();
-        });
-    }
 
-    // CPA Tasks page content
-    const cpaContent = document.querySelector('#cpa-page .internal-content');
-    if (cpaContent && cpaContent.children.length === 0) {
-        cpaContent.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:12px;">
-                <div style="background:var(--glass-bg); border:1px solid var(--glass-border); padding:16px; border-radius:var(--radius-md); display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h4 style="font-size:15px; margin-bottom:4px;">تنزيل وتثبيت تطبيق اللعبة</h4>
-                        <span style="font-size:13px; color:var(--neon-green);">المكافأة: +200 نقطة</span>
-                    </div>
-                    <button class="cpa-task-btn" style="background:var(--neon-green); color:#000; padding:8px 16px; border-radius:var(--radius-sm); font-weight:700;">تنفيذ المهمة</button>
-                </div>
-            </div>
-        `;
-        cpaContent.querySelectorAll('.cpa-task-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                appState.points += 200;
-                appState.lastTask = 'إكمال مهمة تنزيل تطبيق (+200 نقطة)';
-                saveState();
-                updateDashboardData();
-                showToast('أتممت المهمة بنجاح! تم إضافة 200 نقطة.');
-            });
-        });
-    }
 
-    // Wallet page content
-    const walletContent = document.querySelector('#wallet-page .internal-content');
-    if (walletContent && walletContent.children.length === 0) {
-        walletContent.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:16px;">
-                <div style="display:flex; gap:12px;">
-                    <button class="tab-btn active" id="btn-tab-credit" style="flex:1;">سحب رصيد</button>
-                    <button class="tab-btn" id="btn-tab-cash" style="flex:1;">سحب كاش</button>
-                </div>
-                <div style="background:var(--glass-bg); border:1px solid var(--glass-border); padding:20px; border-radius:var(--radius-md); text-align:center;">
-                    <h3 style="font-size:14px; color:var(--text-secondary); margin-bottom:8px;">رصيد السحب المتاح</h3>
-                    <div style="font-size:28px; font-weight:800; color:var(--neon-green);" id="wallet-points-display">${appState.points} نقطة</div>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('btn-tab-credit').addEventListener('click', (e) => {
-            document.querySelectorAll('#wallet-page .tab-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            const withdrawalModal = document.getElementById('withdrawal-modal');
-            withdrawalModal.classList.add('active');
-            updateWithdrawalTabsUI('credit');
-        });
 
-        document.getElementById('btn-tab-cash').addEventListener('click', (e) => {
-            document.querySelectorAll('#wallet-page .tab-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            const withdrawalModal = document.getElementById('withdrawal-modal');
-            withdrawalModal.classList.add('active');
-            updateWithdrawalTabsUI('cash');
-        });
-    } else if (walletContent) {
-        const walletDisplay = document.getElementById('wallet-points-display');
-        if (walletDisplay) {
-            walletDisplay.textContent = `${appState.points} نقطة`;
-        }
-    }
+UIController.closeCaptchaModal =
+function(){
 
-    // Referrals page content (named نظام المشارك)
-    const referralsContent = document.querySelector('#referrals-page .internal-content');
-    if (referralsContent && referralsContent.children.length === 0) {
-        referralsContent.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:16px; text-align:center;">
-                <div style="background:var(--glass-bg); border:1px solid var(--glass-border); padding:20px; border-radius:var(--radius-md);">
-                    <h4 style="font-size:15px; margin-bottom:8px;">شارك رابط المشارك الخاص بك واكسب 100 نقطة عن كل صديق</h4>
-                    <input type="text" readonly value="https://t.me/SyriCoinBot?start=ref_12345" style="width:100%; padding:12px; background:rgba(0,0,0,0.4); border:1px solid var(--glass-border); border-radius:var(--radius-sm); color:var(--text-primary); text-align:center; font-size:12px; margin:12px 0;" id="ref-link-input">
-                    <button id="copy-ref-btn" style="background:var(--neon-green); color:#000; font-weight:700; width:100%; padding:12px; border-radius:var(--radius-sm);">نسخ رابط المشارك</button>
-                </div>
-            </div>
-        `;
-        const copyBtn = referralsContent.querySelector('#copy-ref-btn');
-        if (copyBtn) {
-            copyBtn.addEventListener('click', () => {
-                const input = referralsContent.querySelector('#ref-link-input');
-                if (input) {
-                    input.select();
-                    navigator.clipboard.writeText(input.value);
-                    showToast('تم نسخ رابط المشارك إلى الحافظة!');
-                }
-            });
-        }
-    }
 
-    // Profile page content (Restructured with Expandable Cards and General Settings / Withdrawal History accordion)
-    const profileContent = document.querySelector('#profile-page .internal-content');
-    if (profileContent && profileContent.children.length === 0) {
-        profileContent.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:16px;">
-                <!-- 1. First Expandable Card: إعدادات الحساب -->
-                <div class="expandable-card" id="profile-expand-card">
-                    <div class="expandable-header">
-                        <span>إعدادات الحساب</span>
-                        <span style="font-size:20px; color:var(--text-secondary);">⌄</span>
-                    </div>
-                    <div class="expandable-content">
-                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                            <button id="change-avatar-btn" style="background:var(--glass-bg); border:1px solid var(--glass-border); padding:8px 16px; border-radius:var(--radius-sm); font-size:13px; color:var(--text-primary);">تغيير الصورة الشخصية</button>
-                        </div>
-                        <div class="input-group">
-                            <label>اسم المستخدم</label>
-                            <input type="text" id="profile-username-input" value="مستخدم SyriCoin">
-                        </div>
-                        <h4 style="font-size:14px; font-weight:700; margin-top:8px; color:var(--neon-green);">البيانات الشخصية المحفوظة آلياً</h4>
-                        <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--glass-border); font-size:13px; display:flex; flex-direction:column; gap:6px;">
-                            <div>الاسم الثلاثي: <span id="saved-info-name" style="color:var(--text-secondary);">${appState.userFullName || 'غير محدد'}</span></div>
-                            <div>رقم الهاتف: <span id="saved-info-phone" style="color:var(--text-secondary);">${appState.userPhone || 'غير محدد'}</span></div>
-                            <div>الرقم الوطني: <span id="saved-info-nat" style="color:var(--text-secondary);">${appState.userNationalId || 'غير محدد'}</span></div>
-                        </div>
-                    </div>
-                </div>
+const modal =
+this.safeGet(
+"captcha-modal"
+);
 
-                <!-- 2. Second Expandable Card: الإعدادات العامة -->
-                <div class="expandable-card" id="general-expand-card">
-                    <div class="expandable-header">
-                        <span>الإعدادات العامة</span>
-                        <span style="font-size:20px; color:var(--text-secondary);">⌄</span>
-                    </div>
-                    <div class="expandable-content">
-                        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--glass-border); font-size:14px;">
-                            <span>اللغة</span>
-                            <span style="color:var(--text-primary);">العربية</span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- 3. Third Card / Accordion for سجل السحب -->
-                <div class="expandable-card" id="withdrawal-history-card">
-                    <div class="expandable-header">
-                        <span>سجل السحب</span>
-                        <span style="font-size:20px; color:var(--text-secondary);">⌄</span>
-                    </div>
-                    <div class="expandable-content" id="withdrawal-history-list">
-                        <div style="color:var(--text-secondary); font-size:13px; text-align:center; padding:10px;">لا توجد عمليات سحب سابقة مسجلة</div>
-                    </div>
-                </div>
-            </div>
-        `;
+if(modal)
 
-        // Expandable toggle logic
-        document.querySelectorAll('.expandable-header').forEach(header => {
-            header.addEventListener('click', () => {
-                const card = header.parentElement;
-                card.classList.toggle('expanded');
-            });
-        });
+modal.classList.remove(
+"active"
+);
 
-        // Add Avatar Functionality
-        const changeAvatarBtn = document.getElementById('change-avatar-btn');
-        if (changeAvatarBtn) {
-            changeAvatarBtn.addEventListener('click', () => {
-                showToast('ميزة تغيير الصورة الشخصية ستتوفر في التحديث القادم.');
-            });
-        }
-    }
 
-    // Populate withdrawal history list dynamically
-    updateWithdrawalHistoryUI();
-}
+};
 
-function updateWithdrawalHistoryUI() {
-    const historyListContainer = document.getElementById('withdrawal-history-list');
-    if (!historyListContainer) return;
 
-    if (appState.savedWithdrawals.length === 0) {
-        historyListContainer.innerHTML = `<div style="color:var(--text-secondary); font-size:13px; text-align:center; padding:10px;">لا توجد عمليات سحب سابقة مسجلة</div>`;
-    } else {
-        let html = '';
-        appState.savedWithdrawals.forEach(item => {
-            html += `
-                <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--glass-border); display:flex; justify-content:space-between; align-items:center; font-size:13px;">
-                    <div>
-                        <div style="font-weight:700; color:var(--text-primary);">${item.type}</div>
-                        <div style="color:var(--text-secondary); font-size:11px;">${item.date}</div>
-                    </div>
-                    <div style="color:var(--neon-green); font-weight:700;">${item.amount} نقطة</div>
-                </div>
-            `;
-        });
-        historyListContainer.innerHTML = html;
-    }
 
-    // Also update profile auto-saved labels if loaded
-    const savedName = document.getElementById('saved-info-name');
-    const savedPhone = document.getElementById('saved-info-phone');
-    const savedNat = document.getElementById('saved-info-nat');
-    if (savedName) savedName.textContent = appState.userFullName || 'غير محدد';
-    if (savedPhone) savedPhone.textContent = appState.userPhone || 'غير محدد';
-    if (savedNat) savedNat.textContent = appState.userNationalId || 'غير محدد';
-}
 
-/* =========================================
-   Toast Notification System
-   ========================================= */
-function showToast(message) {
-    const existingToast = document.getElementById('toast-notification');
-    if (existingToast) {
-        existingToast.remove();
-    }
 
-    const toast = document.createElement('div');
-    toast.id = 'toast-notification';
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%) translateY(100px);
-        background: rgba(20, 20, 30, 0.95);
-        color: #ffffff;
-        padding: 12px 24px;
-        border-radius: 30px;
-        border: 1px solid rgba(0, 250, 101, 0.4);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        font-size: 14px;
-        font-weight: 600;
-        z-index: 99999;
-        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
-        opacity: 0;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        text-align: center;
-        max-width: 90%;
-    `;
 
-    document.body.appendChild(toast);
 
-    setTimeout(() => {
-        toast.style.transform = 'translateX(-50%) translateY(0)';
-        toast.style.opacity = '1';
-    }, 10);
 
-    setTimeout(() => {
-        toast.style.transform = 'translateX(-50%) translateY(100px)';
-        toast.style.opacity = '0';
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
-    }, 3000);
-}
+
+/* ==========================================================================
+   VPN OVERLAY
+   ========================================================================== */
+
+
+UIController.toggleVpnOverlay =
+function(show){
+
+
+const overlay =
+this.safeGet(
+"vpn-warning-overlay"
+);
+
+
+
+if(!overlay)
+return;
+
+
+
+if(show)
+
+overlay.classList.remove(
+"hidden"
+);
+
+else
+
+overlay.classList.add(
+"hidden"
+);
+
+
+};
+
+
+
+
+
+
+
+
+/* ==========================================================================
+   TOAST SYSTEM
+   ========================================================================== */
+
+
+UIController.showToast =
+function(message){
+
+
+
+const old =
+document.getElementById(
+"toast-notification"
+);
+
+
+
+if(old)
+old.remove();
+
+
+
+
+const toast =
+document.createElement(
+"div"
+);
+
+
+
+toast.id =
+"toast-notification";
+
+
+
+toast.textContent =
+message;
+
+
+
+toast.style.cssText = `
+
+position:fixed;
+bottom:30px;
+left:50%;
+transform:translateX(-50%);
+background:#111;
+color:white;
+padding:12px 25px;
+border-radius:30px;
+z-index:99999;
+font-size:14px;
+
+`;
+
+
+
+document.body.appendChild(
+toast
+);
+
+
+
+setTimeout(
+()=>toast.remove(),
+3000
+);
+
+
+
+};
+
+
+
+
+
+
+
+/* ==========================================================================
+   FINAL ENTRY POINT
+   ========================================================================== */
+
+
+document.addEventListener(
+"DOMContentLoaded",
+()=>{
+
+
+    UIController.init();
+
+
+
+});
