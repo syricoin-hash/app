@@ -2,7 +2,7 @@
 ====================================================
  SyriCoin Telegram Mini App
  Frontend Engine V1
- Clean Production Structure
+ Production Ready Frontend Structure
  Part 1/4
 ====================================================
 */
@@ -10,13 +10,17 @@
 "use strict";
 
 
+
 /* =========================================
    GLOBAL CONFIGURATION
 ========================================= */
 
+
 const SYRICOIN_CONFIG = {
 
     appName: "SyriCoin",
+
+    version: "V1",
 
     pointsToSYP: 1,
 
@@ -28,7 +32,10 @@ const SYRICOIN_CONFIG = {
 
     apiUrl: "",
 
+    maxLocalBalance: 999999999
+
 };
+
 
 
 
@@ -38,21 +45,82 @@ const SYRICOIN_CONFIG = {
 ========================================= */
 
 
-const tg = window.Telegram?.WebApp || null;
+const TelegramApp = {
+
+    instance:
+    window.Telegram?.WebApp || null,
 
 
-if (tg) {
+    init(){
 
-    tg.ready();
 
-    tg.expand();
+        if(!this.instance){
 
-}
+            console.warn(
+                "Telegram WebApp not detected"
+            );
+
+            return false;
+
+        }
+
+
+        try{
+
+
+            this.instance.ready();
+
+
+            this.instance.expand();
+
+
+            return true;
+
+
+
+        }catch(error){
+
+
+            console.error(
+                "Telegram Init Error:",
+                error
+            );
+
+
+            return false;
+
+
+        }
+
+
+    },
+
+
+    user(){
+
+
+        return (
+            this.instance
+            ?.initDataUnsafe
+            ?.user
+        ) || null;
+
+
+    }
+
+
+};
+
+
+
+TelegramApp.init();
 
 
 
 const telegramUser =
-    tg?.initDataUnsafe?.user || null;
+TelegramApp.user();
+
+
 
 
 
@@ -65,7 +133,9 @@ const telegramUser =
 
 const appState = {
 
-    user: {
+
+    user:{
+
 
         id:
         telegramUser?.id || null,
@@ -76,34 +146,42 @@ const appState = {
 
 
         firstName:
-        telegramUser?.first_name || "مستخدم",
+        telegramUser?.first_name || "مستخدم"
 
 
     },
 
 
-    balance: 0,
+
+    balance:0,
 
 
-    todayEarn: 0,
+    todayEarn:0,
 
 
-    totalEarn: 0,
+    totalEarn:0,
 
 
-    referrals: 0,
+    referrals:0,
 
 
-    completedTasks: 0,
+    completedTasks:0,
 
 
-    adsWatched: 0,
+    adsWatched:0,
 
 
-    level: "Bronze",
+    level:"Bronze",
+
+
+
+    initialized:false
+
 
 
 };
+
+
 
 
 
@@ -116,8 +194,11 @@ const appState = {
 ========================================= */
 
 
-const $ = (id) =>
-    document.getElementById(id);
+const $ = (id)=>{
+
+    return document.getElementById(id);
+
+};
 
 
 
@@ -125,6 +206,7 @@ const $ = (id) =>
 
 
 const DOM = {
+
 
     username:
     $("username"),
@@ -171,7 +253,8 @@ const DOM = {
 
 
     tasksContainer:
-    $("tasksContainer"),
+    $("tasksContainer")
+
 
 
 };
@@ -183,118 +266,66 @@ const DOM = {
 
 
 
+
 /* =========================================
-   SAFE UI UPDATE
+   DATA VALIDATION
 ========================================= */
 
 
-function updateInterface(){
+function safeNumber(value){
 
 
-    if(DOM.username){
-
-        DOM.username.textContent =
-        appState.user.firstName;
-
-    }
+    const number =
+    Number(value);
 
 
 
-    if(DOM.balance){
+    if(
+        Number.isNaN(number) ||
+        number < 0
+    ){
 
-        DOM.balance.textContent =
-        appState.balance;
+        return 0;
 
     }
 
 
-
-
-    if(DOM.sypValue){
-
-        DOM.sypValue.textContent =
-        `${convertSCtoSYP(appState.balance)} ل.س`;
-
-    }
-
-
-
-
-    if(DOM.todayEarn){
-
-        DOM.todayEarn.textContent =
-        `+${appState.todayEarn} SC`;
-
-    }
-
-
-
-
-
-    if(DOM.totalEarn){
-
-        DOM.totalEarn.textContent =
-        `${appState.totalEarn} SC`;
-
-    }
-
-
-
-
-
-    if(DOM.referralCount){
-
-        DOM.referralCount.textContent =
-        appState.referrals;
-
-    }
-
-
-
-
-
-    if(DOM.completedTasks){
-
-        DOM.completedTasks.textContent =
-        appState.completedTasks;
-
-    }
-
-
-
-
-
-    if(DOM.userLevel){
-
-        DOM.userLevel.textContent =
-        appState.level;
-
-    }
-
-
-
-
-
-    if(DOM.adsWatched){
-
-        DOM.adsWatched.textContent =
-        appState.adsWatched;
-
-    }
-
-
-
-
-
-    if(DOM.withdrawBalance){
-
-        DOM.withdrawBalance.textContent =
-        appState.balance;
-
-    }
+    return number;
 
 
 }
+
+
+
+
+
+
+
+
+
+function sanitizeText(value){
+
+
+    if(
+        typeof value !== "string"
+    ){
+
+        return "";
+
+    }
+
+
+
+    return value
+    .trim()
+    .replace(
+        /[<>]/g,
+        ""
+    );
+
+
+}
+
 
 
 
@@ -308,27 +339,36 @@ function updateInterface(){
 ========================================= */
 
 
-function convertSCtoSYP(amountSC){
+function convertSCtoSYP(amount){
 
 
-    return amountSC *
-    SYRICOIN_CONFIG.pointsToSYP;
+    return (
+        safeNumber(amount)
+        *
+        SYRICOIN_CONFIG.pointsToSYP
+    );
+
+
+}
+
+
+
+
+
+
+
+function convertSYPtoSC(amount){
+
+
+    return (
+        safeNumber(amount)
+        /
+        SYRICOIN_CONFIG.pointsToSYP
+    );
 
 
 }
 
-
-
-
-
-function convertSYPtoSC(amountSYP){
-
-
-    return amountSYP /
-    SYRICOIN_CONFIG.pointsToSYP;
-
-
-}
 
 
 
@@ -337,7 +377,7 @@ function convertSYPtoSC(amountSYP){
 
 
 /* =========================================
-   LOAD TELEGRAM USER
+   USER LOADING
 ========================================= */
 
 
@@ -346,26 +386,42 @@ function loadTelegramUser(){
 
     if(!telegramUser){
 
-        console.log(
-            "Telegram data unavailable"
-        );
 
         return;
+
 
     }
 
 
 
 
+    appState.user.id =
+    telegramUser.id || null;
+
+
+
+    appState.user.username =
+    telegramUser.username || "User";
+
+
+
+    appState.user.firstName =
+    telegramUser.first_name || "مستخدم";
+
+
+
+
+
+
+
     if(DOM.username){
 
+
         DOM.username.textContent =
+        sanitizeText(
+            appState.user.firstName
+        );
 
-        telegramUser.first_name ||
-
-        telegramUser.username ||
-
-        "مستخدم SyriCoin";
 
     }
 
@@ -378,24 +434,155 @@ function loadTelegramUser(){
 
 
 
+
 /* =========================================
-   APPLICATION INIT
+   UI UPDATE ENGINE
 ========================================= */
 
 
-function initializeApp(){
+function updateInterface(){
 
 
-    loadTelegramUser();
+
+    if(DOM.balance){
 
 
-    loadLocalData();
+        DOM.balance.textContent =
+        safeNumber(
+            appState.balance
+        );
 
 
-    updateInterface();
+    }
 
 
-    setupEvents();
+
+
+
+
+
+    if(DOM.sypValue){
+
+
+        DOM.sypValue.textContent =
+
+        `${convertSCtoSYP(appState.balance)} ل.س`;
+
+
+    }
+
+
+
+
+
+
+
+    if(DOM.todayEarn){
+
+
+        DOM.todayEarn.textContent =
+
+        `+${safeNumber(appState.todayEarn)} SC`;
+
+
+    }
+
+
+
+
+
+
+
+    if(DOM.totalEarn){
+
+
+        DOM.totalEarn.textContent =
+
+        `${safeNumber(appState.totalEarn)} SC`;
+
+
+    }
+
+
+
+
+
+
+
+    if(DOM.referralCount){
+
+
+        DOM.referralCount.textContent =
+
+        safeNumber(appState.referrals);
+
+
+    }
+
+
+
+
+
+
+
+    if(DOM.completedTasks){
+
+
+        DOM.completedTasks.textContent =
+
+        safeNumber(appState.completedTasks);
+
+
+    }
+
+
+
+
+
+
+
+    if(DOM.userLevel){
+
+
+        DOM.userLevel.textContent =
+
+        appState.level;
+
+
+    }
+
+
+
+
+
+
+
+    if(DOM.adsWatched){
+
+
+        DOM.adsWatched.textContent =
+
+        safeNumber(appState.adsWatched);
+
+
+    }
+
+
+
+
+
+
+
+    if(DOM.withdrawBalance){
+
+
+        DOM.withdrawBalance.textContent =
+
+        safeNumber(appState.balance);
+
+
+    }
+
 
 
 }
@@ -404,7 +591,7 @@ function initializeApp(){
 ====================================================
  SyriCoin Telegram Mini App
  Frontend Engine V1
- Clean Production Structure
+ Production Ready Frontend Structure
  Part 2/4
 ====================================================
 */
@@ -412,11 +599,241 @@ function initializeApp(){
 
 
 /* =========================================
-   EVENTS SYSTEM
+   LOCAL STORAGE SYSTEM
+========================================= */
+
+
+function saveLocalData(){
+
+
+    const data = {
+
+
+        user:
+        appState.user,
+
+
+        balance:
+        safeNumber(appState.balance),
+
+
+        todayEarn:
+        safeNumber(appState.todayEarn),
+
+
+        totalEarn:
+        safeNumber(appState.totalEarn),
+
+
+        referrals:
+        safeNumber(appState.referrals),
+
+
+        completedTasks:
+        safeNumber(appState.completedTasks),
+
+
+        adsWatched:
+        safeNumber(appState.adsWatched),
+
+
+        level:
+        appState.level
+
+
+    };
+
+
+
+
+
+    try{
+
+
+        localStorage.setItem(
+
+            SYRICOIN_CONFIG.storageKey,
+
+            JSON.stringify(data)
+
+        );
+
+
+
+    }catch(error){
+
+
+        console.error(
+
+            "Storage Save Error:",
+            error
+
+        );
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+function loadLocalData(){
+
+
+
+    try{
+
+
+        const savedData =
+
+        localStorage.getItem(
+
+            SYRICOIN_CONFIG.storageKey
+
+        );
+
+
+
+
+
+        if(!savedData){
+
+
+            return;
+
+
+        }
+
+
+
+
+
+
+
+        const data =
+
+        JSON.parse(savedData);
+
+
+
+
+
+
+
+        if(typeof data !== "object"){
+
+            return;
+
+        }
+
+
+
+
+
+
+
+        appState.balance =
+        safeNumber(data.balance);
+
+
+
+        appState.todayEarn =
+        safeNumber(data.todayEarn);
+
+
+
+        appState.totalEarn =
+        safeNumber(data.totalEarn);
+
+
+
+        appState.referrals =
+        safeNumber(data.referrals);
+
+
+
+        appState.completedTasks =
+        safeNumber(data.completedTasks);
+
+
+
+        appState.adsWatched =
+        safeNumber(data.adsWatched);
+
+
+
+        appState.level =
+        sanitizeText(data.level)
+        ||
+        "Bronze";
+
+
+
+
+
+
+
+        if(data.user){
+
+
+            appState.user = {
+
+
+                ...appState.user,
+
+
+                ...data.user
+
+
+            };
+
+
+        }
+
+
+
+
+
+    }catch(error){
+
+
+
+        console.error(
+
+            "Storage Load Error:",
+            error
+
+        );
+
+
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+/* =========================================
+   EVENT MANAGER
 ========================================= */
 
 
 function setupEvents(){
+
 
 
     setupNavigation();
@@ -442,6 +859,8 @@ function setupEvents(){
 
 
 
+
+
 /* =========================================
    BOTTOM NAVIGATION
 ========================================= */
@@ -451,30 +870,13 @@ function setupNavigation(){
 
 
     const navItems =
-    document.querySelectorAll(".nav-item");
 
+    document.querySelectorAll(
 
+        ".nav-item"
 
-    const sections = {
+    );
 
-
-        home:
-        $("tasksSection"),
-
-
-        tasks:
-        $("tasksSection"),
-
-
-        earnings:
-        $("withdrawSection"),
-
-
-        settings:
-        $("settingsSection"),
-
-
-    };
 
 
 
@@ -490,80 +892,87 @@ function setupNavigation(){
 
 
 
+
+
+    const sections = {
+
+
+        0:
+        $("tasksSection"),
+
+
+        1:
+        $("tasksSection"),
+
+
+        2:
+        $("withdrawSection"),
+
+
+        3:
+        $("settingsSection")
+
+
+    };
+
+
+
+
+
+
+
+
     navItems.forEach((item,index)=>{
 
 
+
         item.addEventListener(
+
             "click",
+
             ()=>{
 
 
-                navItems.forEach(btn=>{
 
-                    btn.classList.remove(
+                navItems.forEach(button=>{
+
+
+                    button.classList.remove(
+
                         "active"
+
                     );
+
 
                 });
 
 
 
+
+
+
                 item.classList.add(
+
                     "active"
+
                 );
 
 
 
 
 
-                switch(index){
 
+                showSection(
 
-                    case 0:
+                    sections[index]
 
-                        showSection(
-                            sections.home
-                        );
-
-                    break;
-
-
-
-                    case 1:
-
-                        showSection(
-                            sections.tasks
-                        );
-
-                    break;
-
-
-
-                    case 2:
-
-                        showSection(
-                            sections.earnings
-                        );
-
-                    break;
-
-
-
-                    case 3:
-
-                        showSection(
-                            sections.settings
-                        );
-
-                    break;
-
-
-
-                }
+                );
 
 
 
             }
+
+
         );
 
 
@@ -592,9 +1001,14 @@ function showSection(section){
 
 
     const allSections =
+
     document.querySelectorAll(
+
         ".content-section"
+
     );
+
+
 
 
 
@@ -604,7 +1018,9 @@ function showSection(section){
 
 
         item.classList.add(
+
             "hidden"
+
         );
 
 
@@ -619,7 +1035,9 @@ function showSection(section){
 
 
         section.classList.remove(
+
             "hidden"
+
         );
 
 
@@ -638,7 +1056,7 @@ function showSection(section){
 
 
 /* =========================================
-   TASK TABS
+   TASK TABS SYSTEM
 ========================================= */
 
 
@@ -647,17 +1065,25 @@ function setupTaskTabs(){
 
 
     const tabs =
+
     document.querySelectorAll(
+
         ".tab-btn"
+
     );
+
 
 
 
 
     const lists =
+
     document.querySelectorAll(
+
         ".task-list"
+
     );
+
 
 
 
@@ -674,31 +1100,43 @@ function setupTaskTabs(){
 
 
 
+
+
     tabs.forEach(tab=>{
 
 
+
         tab.addEventListener(
+
             "click",
+
             ()=>{
 
 
 
                 const target =
+
                 tab.dataset.tab;
 
 
 
 
 
-                tabs.forEach(btn=>{
 
 
-                    btn.classList.remove(
+                tabs.forEach(button=>{
+
+
+                    button.classList.remove(
+
                         "active"
+
                     );
 
 
                 });
+
+
 
 
 
@@ -708,7 +1146,9 @@ function setupTaskTabs(){
 
 
                     list.classList.remove(
+
                         "active"
+
                     );
 
 
@@ -719,8 +1159,11 @@ function setupTaskTabs(){
 
 
 
+
                 tab.classList.add(
+
                     "active"
+
                 );
 
 
@@ -730,7 +1173,9 @@ function setupTaskTabs(){
 
 
                 const activeList =
+
                 $(target);
+
 
 
 
@@ -740,7 +1185,9 @@ function setupTaskTabs(){
 
 
                     activeList.classList.add(
+
                         "active"
+
                     );
 
 
@@ -750,6 +1197,8 @@ function setupTaskTabs(){
 
 
             }
+
+
         );
 
 
@@ -769,6 +1218,87 @@ function setupTaskTabs(){
 
 
 /* =========================================
+   NOTIFICATION SYSTEM
+========================================= */
+
+
+function setupNotifications(){
+
+
+
+    const button =
+
+    $("notificationBtn");
+
+
+
+
+
+    if(!button){
+
+        return;
+
+    }
+
+
+
+
+
+
+
+    button.addEventListener(
+
+        "click",
+
+        ()=>{
+
+
+            showNotification(
+
+                "لا توجد إشعارات جديدة"
+
+            );
+
+
+        }
+
+
+    );
+
+
+}
+
+
+
+
+
+
+
+
+function showNotification(message){
+
+
+    alert(
+
+        sanitizeText(message)
+
+    );
+
+
+}
+
+/*
+====================================================
+ SyriCoin Telegram Mini App
+ Frontend Engine V1
+ Production Ready Frontend Structure
+ Part 3/4
+====================================================
+*/
+
+
+
+/* =========================================
    ADS SYSTEM
 ========================================= */
 
@@ -776,8 +1306,8 @@ function setupTaskTabs(){
 function setupAds(){
 
 
-
     const button =
+
     $("watchAdButton");
 
 
@@ -795,8 +1325,11 @@ function setupAds(){
 
 
 
+
     button.addEventListener(
+
         "click",
+
         ()=>{
 
 
@@ -804,6 +1337,8 @@ function setupAds(){
 
 
         }
+
+
     );
 
 
@@ -822,87 +1357,90 @@ async function startAdProcess(){
 
 
 
-    /*
-    
-    هنا سيتم لاحقاً ربط:
-
-    ADSgram
-    CPA Network
-    Ad API
-    Postback
-
-    */
+    try{
 
 
 
-    appState.adsWatched++;
+        const result =
 
-
-
-    saveLocalData();
-
-
-    updateInterface();
-
-
-
-
-
-    alert(
-        "سيتم تحميل الإعلان..."
-    );
-
-
-
-}
+        await API.startAd();
 
 
 
 
 
 
+        if(!result.success){
 
 
 
-/* =========================================
-   NOTIFICATIONS SYSTEM
-========================================= */
+            showNotification(
 
+                "لا يوجد إعلان متاح حالياً"
 
-function setupNotifications(){
-
-
-
-    const button =
-    $("notificationBtn");
-
-
-
-
-
-    if(!button){
-
-        return;
-
-    }
-
-
-
-
-
-
-    button.addEventListener(
-        "click",
-        ()=>{
-
-
-            alert(
-                "لا توجد إشعارات جديدة"
             );
 
 
+            return;
+
+
         }
-    );
+
+
+
+
+
+
+
+
+        appState.adsWatched++;
+
+
+
+        saveLocalData();
+
+
+
+        updateInterface();
+
+
+
+
+
+
+
+        showNotification(
+
+            "تم بدء الإعلان"
+
+        );
+
+
+
+
+
+    }catch(error){
+
+
+
+        console.error(
+
+            "Ad Error:",
+            error
+
+        );
+
+
+
+        showNotification(
+
+            "حدث خطأ أثناء تحميل الإعلان"
+
+        );
+
+
+
+    }
 
 
 
@@ -926,7 +1464,9 @@ function setupWithdraw(){
 
 
     const button =
+
     $("submitWithdraw");
+
 
 
 
@@ -943,8 +1483,11 @@ function setupWithdraw(){
 
 
 
+
     button.addEventListener(
+
         "click",
+
         ()=>{
 
 
@@ -952,6 +1495,8 @@ function setupWithdraw(){
 
 
         }
+
+
     );
 
 
@@ -971,17 +1516,26 @@ async function processWithdraw(){
 
 
     const amountInput =
+
     $("withdrawAmount");
 
 
 
+
+
     const methodInput =
+
     $("withdrawMethod");
 
 
 
+
+
     const phoneInput =
+
     $("withdrawPhone");
+
+
 
 
 
@@ -1003,24 +1557,43 @@ async function processWithdraw(){
 
 
 
+
+
     const amountSYP =
-    Number(
+
+    safeNumber(
+
         amountInput.value
+
     );
 
 
 
 
 
+
+
     const method =
-    methodInput.value;
+
+    sanitizeText(
+
+        methodInput.value
+
+    );
+
+
 
 
 
 
 
     const phone =
-    phoneInput.value.trim();
+
+    sanitizeText(
+
+        phoneInput.value
+
+    );
 
 
 
@@ -1030,15 +1603,19 @@ async function processWithdraw(){
 
 
 
-    if(!amountSYP || amountSYP <= 0){
+    if(amountSYP <= 0){
 
 
-        alert(
+
+        showNotification(
+
             "أدخل مبلغ صحيح"
+
         );
 
 
         return;
+
 
     }
 
@@ -1056,12 +1633,16 @@ async function processWithdraw(){
     ){
 
 
-        alert(
-            `الحد الأدنى للسحب ${SYRICOIN_CONFIG.minimumWithdrawalSYP} ل.س`
+
+        showNotification(
+
+        `الحد الأدنى للسحب ${SYRICOIN_CONFIG.minimumWithdrawalSYP} ل.س`
+
         );
 
 
         return;
+
 
     }
 
@@ -1074,9 +1655,13 @@ async function processWithdraw(){
 
 
     const amountSC =
+
     convertSYPtoSC(
+
         amountSYP
+
     );
+
 
 
 
@@ -1088,14 +1673,19 @@ async function processWithdraw(){
     if(amountSC > appState.balance){
 
 
-        alert(
-            "رصيد SC غير كافي"
+
+        showNotification(
+
+            "الرصيد غير كافي"
+
         );
 
 
         return;
 
+
     }
+
 
 
 
@@ -1107,14 +1697,19 @@ async function processWithdraw(){
     if(phone.length < 8){
 
 
-        alert(
+
+        showNotification(
+
             "رقم الهاتف غير صحيح"
+
         );
 
 
         return;
 
+
     }
+
 
 
 
@@ -1142,8 +1737,11 @@ async function processWithdraw(){
         phone,
 
 
-        date:
-        new Date().toISOString(),
+        createdAt:
+
+        new Date()
+        .toISOString()
+
 
 
     };
@@ -1154,57 +1752,101 @@ async function processWithdraw(){
 
 
 
-    const result =
-    await API.sendWithdraw(
-        request
-    );
+
+    try{
 
 
 
+        const response =
 
+        await API.sendWithdraw(
 
+            request
 
-    if(result.success){
-
-
-        appState.balance -= amountSC;
-
-
-        updateInterface();
-
-
-        saveLocalData();
-
-
-
-
-        alert(
-            "تم إرسال طلب السحب بنجاح"
         );
 
 
 
-        amountInput.value = "";
 
 
-        phoneInput.value = "";
 
+
+        if(response.success){
+
+
+
+            appState.balance -= amountSC;
+
+
+
+            saveLocalData();
+
+
+
+            updateInterface();
+
+
+
+
+
+
+
+            amountInput.value = "";
+
+
+            phoneInput.value = "";
+
+
+
+
+
+
+
+
+            showNotification(
+
+                "تم إرسال طلب السحب بنجاح"
+
+            );
+
+
+
+        }
+
+
+
+    }catch(error){
+
+
+
+        console.error(
+
+            "Withdraw Error:",
+            error
+
+        );
+
+
+
+        showNotification(
+
+            "فشل إرسال طلب السحب"
+
+        );
 
 
     }
 
 
 
+
 }
 
-/*
-====================================================
- SyriCoin Telegram Mini App
- Frontend Engine V1
- Clean Production Structure
- Part 3/4
-====================================================
-*/
+
+
+
+
+
 
 
 
@@ -1216,41 +1858,78 @@ async function processWithdraw(){
 const taskManager = {
 
 
+
     tasks: [],
+
+
 
 
 
     async loadTasks(){
 
 
+
         try{
 
 
-            this.tasks =
+
+            const response =
+
             await API.getTasks();
+
+
+
+
+
+
+            this.tasks =
+
+            Array.isArray(response)
+
+            ?
+
+            response
+
+            :
+
+            [];
+
+
+
 
 
 
         }catch(error){
 
 
+
             console.error(
-                "Tasks Loading Error:",
+
+                "Tasks Error:",
                 error
+
             );
 
 
+
             this.tasks = [];
+
 
 
         }
 
 
 
+
+
+
+
         renderTasks();
 
 
+
     }
+
 
 
 };
@@ -1277,31 +1956,50 @@ function renderTasks(){
 
 
 
+
+
+
     if(
-        !taskManager.tasks ||
         taskManager.tasks.length === 0
     ){
 
 
+
         DOM.tasksContainer.innerHTML = `
 
-            <div class="empty-state">
 
-                <div>
-                    📋
-                </div>
+        <div class="empty-state">
 
-                <h3>
-                    لا توجد مهام متاحة
-                </h3>
 
-                <p>
-                    سيتم تحديث المهام تلقائياً
-                </p>
+            <div>
+
+                📋
 
             </div>
 
+
+
+            <h3>
+
+                لا توجد مهام متاحة
+
+            </h3>
+
+
+
+            <p>
+
+                سيتم تحديث المهام قريباً
+
+            </p>
+
+
+
+        </div>
+
+
         `;
+
 
 
         return;
@@ -1324,21 +2022,31 @@ function renderTasks(){
 
 
 
+
+
     taskManager.tasks.forEach(task=>{
 
 
 
         const card =
+
         document.createElement(
+
             "div"
+
         );
 
 
 
 
 
+
+
         card.className =
+
         "task-card";
+
+
 
 
 
@@ -1347,19 +2055,27 @@ function renderTasks(){
 
         card.innerHTML = `
 
+
             <h3>
-                ${task.title}
+
+                ${sanitizeText(task.title)}
+
             </h3>
 
 
             <p>
-                ${task.reward} SC
+
+                ${safeNumber(task.reward)} SC
+
             </p>
 
 
             <button>
+
                 تنفيذ
+
             </button>
+
 
 
         `;
@@ -1368,8 +2084,13 @@ function renderTasks(){
 
 
 
+
+
+
         DOM.tasksContainer.appendChild(
+
             card
+
         );
 
 
@@ -1389,25 +2110,23 @@ function renderTasks(){
 
 
 /* =========================================
-   BALANCE SYSTEM
+   BALANCE CONTROL
 ========================================= */
 
 
-function addBalance(amountSC){
+function addBalance(amount){
 
 
 
-    const amount =
-    Number(amountSC);
+    const value =
+
+    safeNumber(amount);
 
 
 
 
 
-    if(
-        !amount ||
-        amount <= 0
-    ){
+    if(value <= 0){
 
         return;
 
@@ -1419,231 +2138,38 @@ function addBalance(amountSC){
 
 
 
-    appState.balance += amount;
+
+    appState.balance += value;
 
 
-    appState.totalEarn += amount;
+    appState.totalEarn += value;
 
 
-    appState.todayEarn += amount;
-
-
-
+    appState.todayEarn += value;
 
 
 
-    updateInterface();
+
+
 
 
     saveLocalData();
 
 
-
-}
-
-
-
-
-
-
-
-
-
-function resetDailyEarn(){
-
-
-
-    appState.todayEarn = 0;
-
-
     updateInterface();
 
 
-    saveLocalData();
-
-
 
 }
 
-
-
-
-
-
-
-
-
-/* =========================================
-   LOCAL STORAGE
-========================================= */
-
-
-function saveLocalData(){
-
-
-
-    const data = {
-
-
-        user:
-        appState.user,
-
-
-        balance:
-        appState.balance,
-
-
-        todayEarn:
-        appState.todayEarn,
-
-
-        totalEarn:
-        appState.totalEarn,
-
-
-        referrals:
-        appState.referrals,
-
-
-        completedTasks:
-        appState.completedTasks,
-
-
-        adsWatched:
-        appState.adsWatched,
-
-
-        level:
-        appState.level,
-
-
-    };
-
-
-
-
-
-
-
-    try{
-
-
-
-        localStorage.setItem(
-
-            SYRICOIN_CONFIG.storageKey,
-
-            JSON.stringify(data)
-
-        );
-
-
-
-
-    }catch(error){
-
-
-
-        console.error(
-
-            "Save Data Error:",
-
-            error
-
-        );
-
-
-
-    }
-
-
-
-}
-
-
-
-
-
-
-
-
-
-function loadLocalData(){
-
-
-
-    try{
-
-
-
-        const saved =
-
-        localStorage.getItem(
-
-            SYRICOIN_CONFIG.storageKey
-
-        );
-
-
-
-
-
-
-        if(!saved){
-
-            return;
-
-        }
-
-
-
-
-
-
-        const data =
-        JSON.parse(saved);
-
-
-
-
-
-
-        Object.assign(
-
-            appState,
-
-            data
-
-        );
-
-
-
-
-    }catch(error){
-
-
-
-        console.error(
-
-            "Load Data Error:",
-
-            error
-
-        );
-
-
-
-    }
-
-
-
-}
-
-
-
-
-
-
+/*
+====================================================
+ SyriCoin Telegram Mini App
+ Frontend Engine V1
+ Production Ready Frontend Structure
+ Part 4/4
+====================================================
+*/
 
 
 
@@ -1658,24 +2184,54 @@ const API = {
     async getTasks(){
 
 
+        /*
+        
+        جاهز مستقبلاً للربط مع:
+
+        - Google Apps Script
+        - Backend Server
+        - CPA Networks
+        - ADS API
+
+
+        */
+
+
+        return [];
+
+    },
+
+
+
+
+
+
+
+    async startAd(){
+
 
         /*
         
         مستقبلاً:
 
-        Google Apps Script
-        Backend Server
-        CPA API
-        ADS API
+        هنا يتم استدعاء:
+
+        ADSgram
+        Ad Network API
+        Rewarded Ads
+
 
         */
 
 
 
+        return {
 
 
-        return [];
+            success:true
 
+
+        };
 
 
     },
@@ -1692,18 +2248,17 @@ const API = {
 
         /*
         
-        مستقبلاً:
-
-        إرسال البيانات إلى السيرفر
+        البيانات التي سترسل للسيرفر:
 
         Telegram ID
-        Amount
+        Amount SYP
+        Amount SC
         Method
         Phone
+        Date
+
 
         */
-
-
 
 
 
@@ -1719,11 +2274,22 @@ const API = {
 
 
 
+        /*
+        
+        حالياً نجاح تجريبي
+
+        لاحقاً يتم استبداله
+        برد السيرفر الحقيقي
+
+
+        */
+
+
 
         return {
 
 
-            success:true,
+            success:true
 
 
         };
@@ -1745,99 +2311,11 @@ const API = {
 
 
 /* =========================================
-   SECURITY HELPERS
+   APPLICATION START CONTROL
 ========================================= */
 
 
-function sanitizeNumber(value){
-
-
-
-    const number =
-    Number(value);
-
-
-
-
-
-    if(
-        isNaN(number)
-    ){
-
-        return 0;
-
-    }
-
-
-
-
-    return number;
-
-
-
-}
-
-
-
-
-
-
-
-
-
-function userLoggedIn(){
-
-
-
-    return Boolean(
-
-        appState.user.id
-
-    );
-
-
-}
-
-
-
-
-
-
-
-
-
-/* =========================================
-   AUTO SAVE
-========================================= */
-
-
-setInterval(()=>{
-
-
-
-    saveLocalData();
-
-
-
-},30000);
-
-/*
-====================================================
- SyriCoin Telegram Mini App
- Frontend Engine V1
- Clean Production Structure
- Part 4/4
-====================================================
-*/
-
-
-
-/* =========================================
-   APPLICATION BOOT CONTROL
-========================================= */
-
-
-let appStarted = false;
+let applicationStarted = false;
 
 
 
@@ -1851,12 +2329,7 @@ async function startApplication(){
 
 
 
-    if(appStarted){
-
-
-        console.log(
-            "SyriCoin already started"
-        );
+    if(applicationStarted){
 
 
         return;
@@ -1869,8 +2342,8 @@ async function startApplication(){
 
 
 
+    applicationStarted = true;
 
-    appStarted = true;
 
 
 
@@ -1885,18 +2358,21 @@ async function startApplication(){
 
 
 
-        initializeApp();
+        loadTelegramUser();
+
+
+
+        updateInterface();
+
+
+
+        setupEvents();
+
 
 
 
 
         await taskManager.loadTasks();
-
-
-
-
-
-        updateInterface();
 
 
 
@@ -1910,8 +2386,11 @@ async function startApplication(){
 
 
         console.log(
-            "SyriCoin App Started Successfully"
+
+            "SyriCoin V1 Started Successfully"
+
         );
+
 
 
 
@@ -1923,7 +2402,7 @@ async function startApplication(){
 
         console.error(
 
-            "Application Start Error:",
+            "SyriCoin Start Error:",
 
             error
 
@@ -1946,19 +2425,22 @@ async function startApplication(){
 
 
 /* =========================================
-   TELEGRAM MAIN BUTTON READY
+   TELEGRAM MAIN BUTTON
 ========================================= */
 
 
-function telegramReady(){
+function setupTelegram(){
 
 
 
-    if(!tg){
+    if(!TelegramApp.instance){
+
 
         return;
 
+
     }
+
 
 
 
@@ -1968,8 +2450,7 @@ function telegramReady(){
     try{
 
 
-
-        tg.MainButton.hide();
+        TelegramApp.instance.MainButton.hide();
 
 
 
@@ -1978,8 +2459,11 @@ function telegramReady(){
 
 
         console.log(
-            "Telegram Button unavailable"
+
+            "Telegram Main Button unavailable"
+
         );
+
 
 
     }
@@ -1997,7 +2481,7 @@ function telegramReady(){
 
 
 /* =========================================
-   GLOBAL ERROR HANDLER
+   GLOBAL ERROR PROTECTION
 ========================================= */
 
 
@@ -2019,6 +2503,35 @@ window.addEventListener(
 
     }
 
+
+);
+
+
+
+
+
+
+
+
+window.addEventListener(
+
+    "unhandledrejection",
+
+    (event)=>{
+
+
+        console.error(
+
+            "Unhandled Promise Error:",
+
+            event.reason
+
+        );
+
+
+    }
+
+
 );
 
 
@@ -2030,7 +2543,34 @@ window.addEventListener(
 
 
 /* =========================================
-   PAGE READY
+   AUTO SAVE
+========================================= */
+
+
+setInterval(
+
+()=>{
+
+
+    saveLocalData();
+
+
+},
+
+30000
+
+);
+
+
+
+
+
+
+
+
+
+/* =========================================
+   APPLICATION BOOT
 ========================================= */
 
 
@@ -2041,7 +2581,7 @@ document.addEventListener(
     ()=>{
 
 
-        telegramReady();
+        setupTelegram();
 
 
         startApplication();
@@ -2049,6 +2589,7 @@ document.addEventListener(
 
 
     }
+
 
 );
 
@@ -2059,8 +2600,9 @@ document.addEventListener(
 
 
 
-
-/* =========================================
-   END SyriCoin Frontend Engine V1
+/*
+====================================================
+ END OF SyriCoin Telegram Mini App
+ Frontend Engine V1
 ====================================================
 */
