@@ -121,7 +121,31 @@ const TgAdapter = {
 
     getUser(){
 
-        return this.tg?.initDataUnsafe?.user || null;
+        const realUser =
+        this.tg?.initDataUnsafe?.user || null;
+
+        if(realUser)
+            return realUser;
+
+
+        // وضع الاختبار: يفعّل فقط لما يكون التطبيق مفتوح
+        // من متصفح عادي خارج تيليجرام (لا يوجد initData إطلاقاً)
+        if(!this.isAvailable()){
+
+            console.warn(
+                "[SyriCoin] وضع اختبار المتصفح مفعّل - هذا مستخدم تجريبي وهمي، غير حقيقي"
+            );
+
+            return {
+                id:"999000000",
+                first_name:"مستخدم تجريبي",
+                username:"browser_test_mode"
+            };
+
+        }
+
+
+        return null;
 
     },
 
