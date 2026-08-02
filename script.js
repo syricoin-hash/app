@@ -1,4 +1,24 @@
 /* ==========================================================================
+   TEMPORARY DIAGNOSTIC - سيتم حذفه بعد حل المشكلة
+   ========================================================================== */
+window.addEventListener("error", function(e){
+    alert(
+        "⚠️ خطأ حقيقي:\n" +
+        e.message +
+        "\nبالملف: " + e.filename +
+        "\nبالسطر: " + e.lineno
+    );
+});
+
+window.addEventListener("unhandledrejection", function(e){
+    alert(
+        "⚠️ خطأ غير معالج (Promise):\n" +
+        (e.reason?.message || e.reason)
+    );
+});
+
+
+/* ==========================================================================
    SyriCoin Telegram Mini App
    Core JavaScript Architecture
    Production Hardened Version
@@ -693,13 +713,13 @@ class ApiClient {
 
 
 
-            if(result.status==="error"){
+            if(result.success===false && result.is_vpn){
 
 
                 const error =
                 new Error(
                     result.message ||
-                    "حدث خطأ بالخادم"
+                    "تم رفض الطلب من نظام الحماية"
                 );
 
 
@@ -720,7 +740,7 @@ class ApiClient {
 
 
 
-            return result.data;
+            return result;
 
 
 
@@ -1139,42 +1159,65 @@ class AuthService {
 
 
 
-        const data =
+        let syncResult =
         await ApiClient.post(
-
-            CONFIG.ENDPOINTS.SYNC_USER,
-
-            {
-
-
-                telegram_id:user.id,
-
-
-                username:
-                user.username || "",
-
-
-                first_name:
-                user.first_name || "",
-
-
-                last_name:
-                user.last_name || "",
-
-
-                language:
-                user.language_code || "ar"
-
-
-            }
-
+            "getUser",
+            { telegram_id:user.id }
         );
 
 
 
+        if(!syncResult.success){
 
-        AppState.setUser(data);
 
+            await ApiClient.post(
+                "registerUser",
+                {
+
+                    telegram_id:user.id,
+
+                    username:
+                    user.username || "",
+
+                    full_name:
+                    [user.first_name, user.last_name]
+                    .filter(Boolean)
+                    .join(" "),
+
+                    phone_number:"",
+
+                    country:"Syria",
+
+                    device_id:
+                    Security.generateRequestID()
+
+                }
+            );
+
+
+            syncResult =
+            await ApiClient.post(
+                "getUser",
+                { telegram_id:user.id }
+            );
+
+
+        }
+
+
+
+        if(!syncResult.success || !syncResult.user){
+
+            throw new Error(
+                syncResult.message ||
+                "تعذر مزامنة الحساب مع الخادم."
+            );
+
+        }
+
+
+
+        AppState.setUser(syncResult.user);
 
 
     }
@@ -1614,6 +1657,24 @@ if(home)
 
 
         }catch(error){
+
+
+
+            const errorBox =
+            this.safeGet(
+                "start-error-text"
+            );
+
+
+            if(errorBox){
+
+                errorBox.textContent =
+                "خطأ: " + error.message;
+
+                errorBox.style.display =
+                "block";
+
+            }
 
 
 
@@ -2151,6 +2212,11 @@ taskId
 
 
 }
+
+
+} /* <-- إغلاق فعلي لـ class UIController، كان ناقص بالملف الأصلي */
+
+/* ========================================================================== END OF UIController CLASS ========================================================================== */
 
 /* ==========================================================================
    SyriCoin Telegram Mini App
