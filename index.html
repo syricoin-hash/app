@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SyriCoin - منصة الربح الرقمي المتطورة</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+
+    <!-- VPN Detection Banner / Alert Overlay -->
+    <div id="vpn-warning-overlay" class="vpn-overlay hidden">
+        <div class="vpn-card">
+            <div class="vpn-icon">🛡️</div>
+            <h3>تنبيه أمني (VPN Detected)</h3>
+            <p>يرجى إيقاف تشغيل VPN حتى تتمكن من استخدام SyriCoin ومتابعة عمليات الربح بأمان.</p>
+            <button id="vpn-dismiss-btn" class="action-btn">فهمت ذلك</button>
+        </div>
+    </div>
+
+    <!-- Welcome Screen -->
+    <div id="welcome-screen">
+        <div class="welcome-content">
+            <div class="brand-logo-container">
+                <div class="brand-glow-circle"></div>
+                <svg class="brand-svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="var(--neon-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="var(--neon-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="var(--neon-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1 class="welcome-title">SyriCoin</h1>
+            <p class="welcome-subtitle">طريقك لكسب النقاط وتحويلها إلى مال</p>
+            <button id="start-app-btn">ابدأ الرحلة الآن</button>
+            <p id="start-error-text" style="color:#ff5c5c; font-size:13px; margin-top:12px; direction:rtl; display:none;"></p>
+        </div>
+    </div>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-content">
+            <div class="logo-placeholder-container">
+                <div class="pulse-ring"></div>
+                <div class="inner-emblem">SC</div>
+            </div>
+            <h1>SyriCoin</h1>
+            <div class="loading-indicator" id="splash-loading-text">جاري مزامنة البيئة الآمنة والبيانات...</div>
+        </div>
+    </div>
+
+    <!-- Main App Wrapper -->
+    <div id="app">
+
+        <!-- Home Page -->
+        <main id="home-page" class="page">
+            
+            <!-- Header -->
+            <header class="app-header">
+                <button id="notifications-btn" class="header-icon-btn" aria-label="الإشعارات">
+                    <span class="icon-text">الإشعارات</span>
+                    <span class="badge hidden" id="noti-badge">0</span>
+                </button>
+                <div class="app-brand">SyriCoin</div>
+                <button id="settings-btn" aria-label="الإعدادات">
+                    <span class="btn-line-main">الحساب</span>
+                    <span class="btn-line-sub">الملف الشخصي</span>
+                </button>
+            </header>
+
+            <!-- Balance Card -->
+            <section class="balance-card">
+                <div class="balance-main">
+                    <h2>الرصيد المتاح</h2>
+                    <div class="points-value" id="main-points-display">0 <span class="unit">نقطة</span></div>
+                    <div class="syp-value" id="main-syp-display">القيمة التقديرية: 0 ليرة سورية</div>
+                </div>
+                <div class="balance-actions">
+                    <button id="request-withdrawal-btn">طلب السحب</button>
+                    <button id="activity-stats-btn" data-target="activity-page">إحصائيات النشاط</button>
+                </div>
+            </section>
+
+            <!-- Earning Methods -->
+            <section class="earning-methods">
+                <h3>طرق الربح المتاحة</h3>
+                <div class="methods-grid">
+                    <button class="method-card" data-target="videos-page">
+                        <span class="method-title">مشاهدة الفيديوهات والإعلانات</span>
+                        <span class="method-desc">اكسب نقاط فورية بالمشاهدة الآمنة</span>
+                    </button>
+                    <button class="method-card" data-target="cpa-page">
+                        <span class="method-title">المهام الماسية (CPA)</span>
+                        <span class="method-desc">عروض ترويجية ومهام عالية القيمة</span>
+                    </button>
+                    <button class="method-card" data-target="referrals-page">
+                        <span class="method-title">نظام المشاركة والإحالات</span>
+                        <span class="method-desc">ادع أصدقاءك وضاعف أرباحك بنسب ثابتة</span>
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Internal Pages -->
+
+        <!-- Activity Stats Page -->
+        <div id="activity-page" class="internal-page">
+            <header class="internal-header">
+                <button class="back-btn" data-target="home-page">رجوع</button>
+                <h2>سجل النشاط والإحصائيات</h2>
+            </header>
+            <div class="internal-content" id="activity-content"></div>
+        </div>
+
+        <!-- Videos Page -->
+        <div id="videos-page" class="internal-page">
+            <header class="internal-header">
+                <button class="back-btn" data-target="home-page">رجوع</button>
+                <h2>مشاهدة الفيديوهات</h2>
+            </header>
+            <div class="internal-content" id="videos-content"></div>
+        </div>
+
+        <!-- CPA Tasks Page -->
+        <div id="cpa-page" class="internal-page">
+            <header class="internal-header">
+                <button class="back-btn" data-target="home-page">رجوع</button>
+                <h2>المهام الماسية</h2>
+            </header>
+            <div class="internal-content" id="cpa-content"></div>
+        </div>
+
+        <!-- Wallet & Withdrawal Page -->
+        <div id="wallet-page" class="internal-page">
+            <header class="internal-header">
+                <button class="back-btn" data-target="home-page">رجوع</button>
+                <h2>المحفظة وسجل السحوبات</h2>
+            </header>
+            <div class="internal-content" id="wallet-content"></div>
+        </div>
+
+        <!-- Referrals Page -->
+        <div id="referrals-page" class="internal-page">
+            <header class="internal-header">
+                <button class="back-btn" data-target="home-page">رجوع</button>
+                <h2>نظام الإحالات</h2>
+            </header>
+            <div class="internal-content" id="referrals-content"></div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profile-page" class="internal-page">
+            <header class="internal-header">
+                <button class="back-btn" data-target="home-page">رجوع</button>
+                <h2>الملف الشخصي والحساب</h2>
+            </header>
+            <div class="internal-content" id="profile-content"></div>
+        </div>
+
+    </div>
+
+    <!-- Withdrawal Modal Bottom Sheet -->
+    <div id="withdrawal-modal" class="modal-overlay">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <div class="modal-header-title">
+                <h3>طلب السحب الآمن</h3>
+                <button id="close-modal-btn">&times;</button>
+            </div>
+            
+            <div class="modal-body-scroll">
+                <button id="auto-fill-btn" class="auto-fill-btn">جلب بيانات الحساب تلقائياً</button>
+                <div class="withdrawal-tabs" id="withdrawal-tabs-container"></div>
+
+                <div class="withdrawal-form">
+                    <div class="input-group">
+                        <label>الاسم الكامل الثلاثي</label>
+                        <input type="text" id="withdrawal-fullname" placeholder="أدخل اسمك الثلاثي بدقة">
+                    </div>
+
+                    <div class="input-group">
+                        <label>رقم الهاتف المحمول</label>
+                        <div class="phone-input-wrapper">
+                            <span class="phone-prefix">09</span>
+                            <input type="tel" id="withdrawal-phone" maxlength="8" placeholder="xxxxxxxx">
+                        </div>
+                    </div>
+
+                    <div class="input-group" id="qr-section-container" style="display: none;">
+                        <label>كود الـ QR الخاص بحسابك المالي</label>
+                        <button type="button" id="upload-qr-btn">رفع صورة كود الـ QR</button>
+                        <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+                        <div id="qr-status-text" class="qr-status">لم يتم رفع أي ملف QR حتى الآن</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>المبلغ المطلوب (بالنقاط)</label>
+                        <input type="number" id="withdrawal-amount" placeholder="أدخل عدد النقاط المراد سحبها">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="smart-confirm-withdrawal-btn">إرسال طلب السحب للمراجعة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Captcha Modal -->
+    <div id="captcha-modal" class="modal-overlay">
+        <div class="captcha-content">
+            <h3>التحقق البشري الأمني</h3>
+            <p>يرجى إتمام اختبار التحقق للمتابعة واستئناف الأنشطة</p>
+            <div id="captcha-container"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
