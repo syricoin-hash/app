@@ -61,7 +61,7 @@ const CONFIG = Object.freeze({
 
         CHECK_SECURITY: "check_security",
 
-        GET_CPA_TASKS: "get_cpa_tasks",
+        GET_CPA_TASKS: "getCPATasks",
 
         VERIFY_TASK: "verify_task",
 
@@ -422,6 +422,19 @@ const AppState = {
 
 
         startedAt:Date.now()
+
+
+    },
+
+
+
+    videoSession:{
+
+
+        count:0,
+
+
+        earningsSyp:0
 
 
     },
@@ -1796,6 +1809,11 @@ if(home)
 
 
 
+        if(pageId==="videos-page")
+            this.renderVideos();
+
+
+
     }
 
 
@@ -1803,6 +1821,30 @@ if(home)
 
 
     static closeAllPages(){
+
+
+        const videosPage =
+        this.safeGet("videos-page");
+
+
+        if(
+            videosPage &&
+            videosPage.classList.contains("active") &&
+            AppState.videoSession.count > 0
+        ){
+
+            this.showToast(
+                "🌟 أحسنت! شاهدت " +
+                AppState.videoSession.count +
+                " فيديو وربحت " +
+                AppState.videoSession.earningsSyp +
+                " ل.س"
+            );
+
+            AppState.videoSession.count = 0;
+            AppState.videoSession.earningsSyp = 0;
+
+        }
 
 
         document
@@ -2031,24 +2073,27 @@ container.innerHTML =
 try{
 
 
-const tasks =
+const result =
 await ApiClient.post(
-CONFIG.ENDPOINTS.GET_CPA_TASKS
+CONFIG.ENDPOINTS.GET_CPA_TASKS,
+{ telegram_id: AppState.user?.telegram_id }
 );
 
+
+const tasks =
+(result && result.tasks) || [];
+
+
+if(tasks.length === 0){
+container.innerHTML =
+"لا توجد مهام متاحة حالياً، تحقق لاحقاً 🙏";
+return;
+}
 
 
 container.innerHTML =
 
 tasks.map(task=>{
-
-
-const done =
-AppState.tasks.completed
-.has(
-task.task_id
-);
-
 
 
 return `
@@ -2080,9 +2125,9 @@ task.description
 <strong>
 
 +${Security.escapeHTML(
-task.reward_points
+String(task.reward_syp)
 )}
-نقطة
+ل.س
 
 </strong>
 
@@ -2091,15 +2136,11 @@ task.reward_points
 
 <button
 
-${done ? "disabled":""}
-
-onclick="UIController.handleTaskAction('${Security.escapeHTML(task.task_id)}')"
+onclick="window.open('${Security.escapeHTML(task.link)}', '_blank')"
 
 >
 
-${done ?
-"مكتملة ✓":
-"تنفيذ"}
+تنفيذ المهمة
 
 </button>
 
@@ -2120,10 +2161,182 @@ ${done ?
 
 
 container.innerHTML =
-"لا توجد مهام حالياً";
+"تعذر تحميل المهام حالياً، حاول لاحقاً";
 
 
 }
+
+
+}
+
+
+
+/* ==========================================================================
+   VIDEOS (ADSGRAM)
+   ========================================================================== */
+
+
+static renderVideos(){
+
+
+    const container =
+    this.safeGet("videos-content");
+
+
+    if(!container)
+        return;
+
+
+    AppState.videoSession.count = 0;
+    AppState.videoSession.earningsSyp = 0;
+
+
+    container.innerHTML = `
+        <p class="video-reassurance">
+            🛡️ إحنا معك خطوة بخطوة — كل فيديو تشاهده نحسبه فوراً
+            ونضيفه لرصيدك مباشرة، إحنا شايفينك ومتابعين معك كل مشاهدة.
+        </p>
+        <div class="video-session-counter">
+            شاهدت اليوم:
+            <span id="video-session-count">0</span>
+            فيديو
+            |
+            أرباح الجلسة:
+            <span id="video-session-earnings">0</span>
+            ل.س
+        </div>
+        <button id="watch-video-btn" class="watch-video-btn">
+            ▶️ شاهد فيديو واكسب نقاط
+        </button>
+    `;
+
+
+    this.safeAddListener(
+        "watch-video-btn",
+        "click",
+        ()=>this.watchVideo()
+    );
+
+
+}
+
+
+
+static async watchVideo(){
+
+
+    const btn =
+    this.safeGet("watch-video-btn");
+
+
+    if(!btn)
+        return;
+
+
+    if(typeof window.Adsgram === "undefined"){
+
+        this.showToast(
+            "تعذر تحميل الإعلان، تحقق من اتصالك بالإنترنت"
+        );
+
+        return;
+
+    }
+
+
+    btn.classList.add("active");
+    btn.disabled = true;
+
+
+    try{
+
+
+        const AdController =
+        window.Adsgram.init({ blockId:"39964" });
+
+
+        const balanceBefore =
+        Number(AppState.user.wallet_balance_syp) || 0;
+
+
+        await AdController.show();
+
+
+        await new Promise(
+            resolve=>setTimeout(resolve, 1500)
+        );
+
+
+        const result =
+        await ApiClient.post(
+            "getUser",
+            { telegram_id: AppState.user.telegram_id }
+        );
+
+
+        if(result && result.user){
+
+
+            const balanceAfter =
+            Number(result.user.wallet_balance_syp) || 0;
+
+
+            const earned =
+            Math.max(0, balanceAfter - balanceBefore);
+
+
+            AppState.user.wallet_balance_syp =
+            balanceAfter;
+
+
+            AppState.user.total_points =
+            result.user.total_points;
+
+
+            AppState.videoSession.count += 1;
+            AppState.videoSession.earningsSyp += earned;
+
+
+            const countEl =
+            this.safeGet("video-session-count");
+
+
+            const earnEl =
+            this.safeGet("video-session-earnings");
+
+
+            if(countEl)
+                countEl.textContent =
+                AppState.videoSession.count;
+
+
+            if(earnEl)
+                earnEl.textContent =
+                AppState.videoSession.earningsSyp;
+
+
+            this.updateDashboard();
+
+
+        }
+
+
+    }catch(e){
+
+
+        this.showToast(
+            "تعذر تحميل الإعلان الآن، حاول مرة أخرى"
+        );
+
+
+    }finally{
+
+
+        btn.classList.remove("active");
+        btn.disabled = false;
+
+
+    }
 
 
 }
