@@ -2252,7 +2252,7 @@ static async watchVideo(){
 
 
         const AdController =
-        window.Adsgram.init({ blockId:"39964" });
+        window.Adsgram.init({ blockId:"41282" });
 
 
         const balanceBefore =
